@@ -1,0 +1,188 @@
+# API Contracts: Physical AI & Humanoid Robotics Textbook
+
+## Course Content API
+
+### Get All Modules
+- **Endpoint**: `GET /api/modules`
+- **Description**: Retrieve all available course modules
+- **Response**:
+  ```json
+  {
+    "modules": [
+      {
+        "id": "module-01-foundations",
+        "title": "Foundations of Physical AI",
+        "description": "Introduction to Physical AI concepts and humanoid robotics",
+        "duration": 2,
+        "prerequisites": [],
+        "objectives": [
+          "Understand what makes Physical AI different from digital AI",
+          "Explain why humanoid form matters in robotics",
+          "Identify key challenges in physical embodiment"
+        ]
+      }
+    ]
+  }
+  ```
+
+### Get Module Details
+- **Endpoint**: `GET /api/modules/{moduleId}`
+- **Description**: Retrieve detailed information about a specific module
+- **Path Parameters**: 
+  - `moduleId`: ID of the module (e.g., "module-01-foundations")
+- **Response**:
+  ```json
+  {
+    "id": "module-01-foundations",
+    "title": "Foundations of Physical AI",
+    "description": "Introduction to Physical AI concepts and humanoid robotics",
+    "duration": 2,
+    "prerequisites": [],
+    "objectives": [
+      "Understand what makes Physical AI different from digital AI",
+      "Explain why humanoid form matters in robotics",
+      "Identify key challenges in physical embodiment"
+    ],
+    "parts": [
+      {
+        "id": "part-01-concepts",
+        "title": "Core Concepts",
+        "chapters": [
+          {
+            "id": "01-intro-physical-ai",
+            "title": "Introduction to Physical AI",
+            "content": "Introduction to the fundamental concepts..."
+          }
+        ]
+      }
+    ]
+  }
+  ```
+
+### Get Chapter Content
+- **Endpoint**: `GET /api/chapters/{chapterId}`
+- **Description**: Retrieve content of a specific chapter
+- **Path Parameters**:
+  - `chapterId`: ID of the chapter (e.g., "01-intro-physical-ai")
+- **Response**:
+  ```json
+  {
+    "id": "01-intro-physical-ai",
+    "title": "Introduction to Physical AI",
+    "objectives": [
+      "Understand what makes Physical AI different from digital AI",
+      "Explain why humanoid form matters in robotics"
+    ],
+    "prerequisites": [],
+    "content": "# Introduction to Physical AI\n\nPhysical AI is different from digital AI...",
+    "nextSteps": ["02-embodied-intelligence"],
+    "codeExamples": [
+      {
+        "id": "example-01-hello-ros",
+        "title": "Hello ROS 2",
+        "language": "python",
+        "code": "import rclpy\nfrom rclpy.node import Node\n\nclass HelloWorld(Node):\n    def __init__(self):\n        super().__init__('hello_world')\n        self.get_logger().info('Hello ROS 2!')",
+        "explanation": "This simple example demonstrates how to create a basic ROS 2 node..."
+      }
+    ],
+    "exercises": [
+      {
+        "id": "exercise-01-ros-basics",
+        "title": "ROS 2 Publisher Node",
+        "description": "Create a publisher node that publishes a string message",
+        "difficulty": "beginner",
+        "estimatedTime": 30
+      }
+    ]
+  }
+  ```
+
+### Submit Exercise Solution
+- **Endpoint**: `POST /api/exercises/{exerciseId}/submit`
+- **Description**: Submit a solution for an exercise
+- **Path Parameters**:
+  - `exerciseId`: ID of the exercise
+- **Request Body**:
+  ```json
+  {
+    "studentId": "student-123",
+    "solution": "Your solution code or description here",
+    "files": ["array", "of", "file", "paths"]
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "status": "submitted",
+    "submissionId": "submission-456",
+    "result": {
+      "grade": "pending",
+      "feedback": null
+    }
+  }
+  ```
+
+### Get Assessment Results
+- **Endpoint**: `GET /api/assessments/{assessmentId}/results`
+- **Description**: Retrieve results for a specific assessment
+- **Path Parameters**:
+  - `assessmentId`: ID of the assessment
+- **Query Parameters**:
+  - `studentId`: (optional) ID of the student to get specific results
+- **Response**:
+  ```json
+  {
+    "assessmentId": "assessment-ros2-package-dev",
+    "title": "ROS 2 Package Development",
+    "results": [
+      {
+        "studentId": "student-123",
+        "grade": "A",
+        "feedback": "Excellent implementation of the ROS 2 package..."
+      }
+    ]
+  }
+  ```
+
+## Simulation API
+
+### Launch Simulation Environment
+- **Endpoint**: `POST /api/simulations/launch`
+- **Description**: Launch a specific simulation environment
+- **Request Body**:
+  ```json
+  {
+    "environmentId": "basic-warehouse-env",
+    "robotModelId": "humanoid-simulation-1",
+    "scenario": "navigation-task"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "status": "launched",
+    "session": {
+      "id": "session-789",
+      "connectionUrl": "ws://localhost:8080/simulation",
+      "timeout": 3600
+    }
+  }
+  ```
+
+### Get Available Robot Models
+- **Endpoint**: `GET /api/robots/models`
+- **Description**: Retrieve all available robot models for simulations
+- **Response**:
+  ```json
+  {
+    "models": [
+      {
+        "id": "humanoid-simulation-1",
+        "name": "Basic Humanoid",
+        "description": "Simple humanoid model for basic tasks",
+        "capabilities": ["navigation", "object_interaction"],
+        "simulator": "gazebo"
+      }
+    ]
+  }
+  ```
