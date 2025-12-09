@@ -1,0 +1,143 @@
+/**
+ * CSS files with the .module.css suffix will be treated as CSS modules
+ * and scoped locally.
+ */
+
+.heroBanner {
+  padding: 4rem 2rem;
+  /* Using design token for horizontal padding */
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(-45deg, #1a0b2e, #430f58, #7a2cbf, #9d4edd, #c77dff);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  25% {
+    background-position: 50% 100%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  75% {
+    background-position: 50% 0%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@media screen and (max-width: 996px) {
+  .heroBanner {
+    padding: 2rem 1rem;
+  }
+}
+
+/* Split layout for hero section */
+.heroContainer {
+  display: grid;
+  grid-template-columns: 0.3fr 0.7fr;
+  /* 30% left / 70% right */
+  gap: 2rem;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+@media screen and (max-width: 996px) {
+  .heroContainer {
+    grid-template-columns: 1fr;
+    /* Stack on mobile */
+    text-align: center;
+  }
+}
+
+.leftSide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.robotImage {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--border-radius-images);
+  border: 2px solid var(--color-purple-glow);
+  box-shadow: 0 0 20px var(--color-purple-glow);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.robotImage:hover {
+  box-shadow: 0 0 30px var(--color-purple-glow), 0 0 40px rgba(139, 92, 246, 0.7);
+  transform: scale(1.03);
+}
+
+.rightSide {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+@media screen and (max-width: 996px) {
+  .rightSide {
+    align-items: center;
+  }
+}
+
+.heroTitle {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: var(--color-text-white);
+}
+
+@media screen and (max-width: 996px) {
+  .heroTitle {
+    font-size: 2rem;
+  }
+}
+
+.heroSubtitle {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  color: var(--color-text-gray);
+  max-width: 600px;
+}
+
+.startButton {
+  background-color: var(--color-black);
+  border: 2px solid var(--color-purple-glow);
+  box-shadow: 0 0 15px var(--color-purple-glow);
+  transition: box-shadow 0.3s ease;
+  color: #FFFFFF;
+  /* Changed to white to make it more visible */
+  border-radius: var(--border-radius-button);
+  padding: 0.75rem 1.5rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.startButton:hover {
+  box-shadow: 0 0 25px var(--color-purple-glow);
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+@media screen and (max-width: 996px) {
+  .buttons {
+    justify-content: center;
+  }
+}
