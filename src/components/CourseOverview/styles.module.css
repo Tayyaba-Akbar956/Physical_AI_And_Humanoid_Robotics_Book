@@ -1,0 +1,88 @@
+.courseOverview {
+  padding: 3rem 0;
+  background-color: #f8f9fa;
+}
+
+.moduleCard {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  height: 100%;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.moduleCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+
+.moduleHeader {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--ifm-color-primary);
+}
+
+.moduleHeader h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--ifm-color-primary);
+}
+
+.duration {
+  display: inline-block;
+  background-color: var(--ifm-color-primary);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.keyTopics h4 {
+  margin-top: 1rem;
+  color: var(--ifm-color-primary);
+}
+
+.keyTopics ul {
+  padding-left: 1.5rem;
+  margin-bottom: 0;
+}
+
+.keyTopics li {
+  margin-bottom: 0.5rem;
+}
+
+.progressVisualization {
+  margin-top: 2rem;
+}
+
+.progressBar {
+  width: 100%;
+  height: 20px;
+  background-color: #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progressFill {
+  width: 75%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--ifm-color-primary), var(--ifm-color-primary-dark));
+  border-radius: 10px;
+}
+
+.progressLabels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.9rem;
+}
+
+[data-theme='dark'] .courseOverview {
+  background-color: #242526;
+}
+
+[data-theme='dark'] .moduleCard {
+  background-color: #343536;
+}

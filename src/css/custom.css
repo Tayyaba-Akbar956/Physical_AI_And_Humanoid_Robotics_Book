@@ -1,0 +1,389 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* You can override the default Infima variables here. */
+:root {
+  --ifm-color-primary: #a832ff;
+  /* Glowing Purple */
+  --ifm-color-primary-dark: #972ce0;
+  /* Darker Purple */
+  --ifm-color-primary-darker: #8f2ad6;
+  /* Even Darker Purple */
+  --ifm-color-primary-darkest: #7523b0;
+  /* Darkest Purple */
+  --ifm-color-primary-light: #b34dff;
+  /* Lighter Purple */
+  --ifm-color-primary-lighter: #b95aff;
+  /* Even Lighter Purple */
+  --ifm-color-primary-lightest: #c97dff;
+  /* Lightest Purple */
+  --ifm-code-font-size: 95%;
+
+  /* Glowing Sea Green for secondary elements */
+  --ifm-color-secondary: #50eb9a;
+  --ifm-color-secondary-dark: #3ad985;
+  --ifm-color-secondary-darker: #37cc7d;
+  --ifm-color-secondary-darkest: #2cb16a;
+  --ifm-color-secondary-light: #66f0a7;
+  --ifm-color-secondary-lighter: #72f2ae;
+  --ifm-color-secondary-lightest: #92f6c1;
+
+  /* Glowing Dark Green for accents */
+  --ifm-color-accent: #20c20e;
+  --ifm-color-accent-dark: #1bab0d;
+  --ifm-color-accent-darker: #199e0c;
+  --ifm-color-accent-darkest: #147a09;
+  --ifm-color-accent-light: #24d910;
+  --ifm-color-accent-lighter: #28e211;
+  --ifm-color-accent-lightest: #33e724;
+
+  /* Glowing Dark Blue for navigation elements */
+  --ifm-color-navigation: #3366ff;
+  --ifm-color-navigation-dark: #1a52ff;
+  --ifm-color-navigation-darker: #0d48ff;
+  --ifm-color-navigation-darkest: #0038d4;
+  --ifm-color-navigation-light: #4c7aff;
+  --ifm-color-navigation-lighter: #5e88ff;
+  --ifm-color-navigation-lightest: #7a9eff;
+
+  /* Footer text color - Purple */
+  --ifm-footer-link-color: #a832ff;
+  /* Purple footer links */
+  --ifm-footer-title-color: #a832ff;
+  /* Purple footer titles */
+  --ifm-footer-color: #a832ff;
+  /* Purple footer text */
+
+  /* Design tokens for UI improvements */
+  --color-black: #000000;
+  --color-card-bg: #1a1a1a;
+  --color-purple-glow: #8b5cf6;
+  --color-purple-light: #a78bfa;
+  --color-text-white: #ffffff;
+  --color-text-gray: #b8b8d1;
+  --color-dark-gradient-start: #1a1a2e;
+  --color-dark-gradient-end: #16213e;
+
+  /* Spacing tokens */
+  --spacing-card-padding: 2rem;
+  --spacing-grid-gap: 2rem;
+  --spacing-section-padding-vertical: 4rem;
+  --spacing-section-padding-horizontal: 2rem;
+
+  /* Border radius tokens */
+  --border-radius-cards: 12px;
+  --border-radius-button: 8px;
+  --border-radius-images: 8px;
+}
+
+/* Dark mode colors */
+[data-theme='dark'] {
+  --ifm-color-primary: #b34dff;
+  /* Lighter Purple for dark mode */
+  --ifm-color-primary-dark: #972ce0;
+  --ifm-color-primary-darker: #8f2ad6;
+  --ifm-color-primary-darkest: #7523b0;
+  --ifm-color-primary-light: #c26cff;
+  --ifm-color-primary-lighter: #ca7cff;
+  --ifm-color-primary-lightest: #d9a3ff;
+
+  --ifm-color-secondary: #66f0a7;
+  --ifm-color-secondary-dark: #3ad985;
+  --ifm-color-secondary-darker: #37cc7d;
+  --ifm-color-secondary-darkest: #2cb16a;
+  --ifm-color-secondary-light: #7af5b5;
+  --ifm-color-secondary-lighter: #86f6bd;
+  --ifm-color-secondary-lightest: #a2f8ce;
+
+  /* Dark mode footer text color - Purple */
+  --ifm-footer-link-color: #b34dff;
+  /* Purple footer links in dark mode */
+  --ifm-footer-title-color: #b34dff;
+  /* Purple footer titles in dark mode */
+  --ifm-footer-color: #b34dff;
+  /* Purple footer text in dark mode */
+}
+
+/* Glowing effect utility class */
+.glowing-element {
+  border: 2px solid var(--color-purple-glow);
+  box-shadow: 0 0 15px var(--color-purple-glow);
+  transition: box-shadow 0.3s ease;
+}
+
+.glowing-element:hover {
+  box-shadow: 0 0 25px var(--color-purple-glow);
+}
+
+.glowing-element:focus {
+  outline: 2px solid var(--color-purple-glow);
+  outline-offset: 2px;
+}
+
+/* Custom styling for the textbook */
+.docusaurus-highlight-code-line {
+  background-color: rgba(0, 0, 0, 0.1);
+  display: block;
+  margin: 0 calc(-1 * var(--ifm-pre-padding));
+  padding: 0 var(--ifm-pre-padding);
+}
+
+[data-theme='dark'] .docusaurus-highlight-code-line {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Styling for learning objectives */
+.learning-objectives {
+  background-color: var(--ifm-color-secondary-lightest);
+  border-left: 4px solid var(--ifm-color-primary);
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+[data-theme='dark'] .learning-objectives {
+  background-color: var(--ifm-color-secondary-darkest);
+}
+
+/* Styling for key takeaways */
+.key-takeaways {
+  background-color: var(--ifm-color-accent-lightest);
+  border-left: 4px solid var(--ifm-color-accent);
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+[data-theme='dark'] .key-takeaways {
+  background-color: var(--ifm-color-accent-darkest);
+}
+
+/* Custom button styles */
+.button--primary {
+  background-color: var(--ifm-color-primary);
+  border-color: var(--ifm-color-primary);
+}
+
+.button--primary:hover {
+  background-color: var(--ifm-color-primary-dark);
+  border-color: var(--ifm-color-primary-dark);
+}
+
+/* Custom card styling for module overview */
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+}
+
+/* Custom styling for code blocks */
+code {
+  background-color: #f0f0f0;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+[data-theme='dark'] code {
+  background-color: #333;
+}
+
+/* Mobile and responsive adjustments */
+@media (max-width: 768px) {
+  .heroBanner {
+    padding: 2rem 1rem;
+  }
+
+  .hero__title {
+    font-size: 2rem;
+  }
+
+  .hero__subtitle {
+    font-size: 1.2rem;
+  }
+
+  .featureSvg {
+    height: 150px;
+    width: 150px;
+  }
+
+  .courseTimeline {
+    padding: 1rem;
+  }
+
+  .timelineRow {
+    flex-direction: column;
+    text-align: left;
+  }
+
+  .timelineRow .col {
+    padding: 0.25rem 0 !important;
+  }
+
+  .buttons {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .buttons .button {
+    width: 100%;
+    margin: 0;
+  }
+
+  /* Responsive adjustments for code blocks and technical content */
+  pre,
+  code {
+    font-size: 0.8rem;
+  }
+
+  /* Responsive for images and diagrams */
+  .featureImage {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Responsive table adjustments */
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  table {
+    min-width: 100%;
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* Module content adjustments */
+  article {
+    padding: 0 1rem;
+  }
+
+  /* Sidebar adjustments for mobile */
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroBanner {
+    padding: 1.5rem 0.5rem;
+  }
+
+  .hero__title {
+    font-size: 1.7rem;
+  }
+
+  .hero__subtitle {
+    font-size: 1rem;
+  }
+
+  .featureSvg {
+    height: 120px;
+    width: 120px;
+  }
+
+  .courseTimeline {
+    padding: 0.75rem 0.5rem;
+  }
+
+  /* Further mobile adjustments */
+  .hero__title {
+    font-size: 1.5rem;
+  }
+
+  .hero__subtitle {
+    font-size: 0.9rem;
+  }
+
+  .featureSvg {
+    height: 100px;
+    width: 100px;
+  }
+
+  /* Adjustments for navigation */
+  .navbar__items {
+    flex-wrap: wrap;
+  }
+
+  .navbar__item {
+    margin: 0.25rem;
+  }
+
+  /* Adjustments for content blocks */
+  .learning-objectives,
+  .key-takeaways {
+    margin: 0.75rem 0;
+    padding: 0.75rem;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .hero__title {
+    font-size: 2.5rem;
+  }
+
+  .featureSvg {
+    height: 175px;
+    width: 175px;
+  }
+
+  .courseTimeline {
+    padding: 1.25rem;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2),
+(min-resolution: 192dpi) {
+  .featureImage {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Accessibility adjustments */
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+
+  .card:hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Force Footer Colors - Override any defaults */
+.footer {
+  --ifm-footer-color: #a832ff;
+  --ifm-footer-link-color: #a832ff;
+  --ifm-footer-title-color: #ffffff;
+  /* White titles */
+  color: var(--ifm-footer-color);
+}
+
+.footer__title {
+  color: var(--ifm-footer-title-color) !important;
+}
+
+.footer__link-item {
+  color: var(--ifm-footer-link-color) !important;
+}
+
+.footer__copyright {
+  color: #ffffff !important;
+}
+
+[data-theme='dark'] .footer {
+  --ifm-footer-color: #b34dff;
+  --ifm-footer-link-color: #b34dff;
+  --ifm-footer-title-color: #ffffff;
+  /* White titles in dark mode too */
+}
