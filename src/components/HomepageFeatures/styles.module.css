@@ -1,0 +1,79 @@
+.features {
+  display: flex;
+  align-items: center;
+  padding: 2rem 0;
+  width: 100%;
+}
+
+.featureCol {
+  margin-bottom: 2rem;
+}
+
+/* Card styling for module cards */
+.featureCard {
+  background-color: var(--color-card-bg);
+  border: 2px solid var(--color-purple-glow);
+  box-shadow: 0 0 15px var(--color-purple-glow);
+  transition: box-shadow 0.3s ease;
+  border-radius: var(--border-radius-cards);
+  padding: var(--spacing-card-padding);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.featureCard:hover {
+  box-shadow: 0 0 25px var(--color-purple-glow);
+  transform: translateY(-5px);
+}
+
+.featureCard:focus {
+  outline: 2px solid var(--color-purple-glow);
+  outline-offset: 2px;
+}
+
+.featureSvg {
+  height: 200px;
+  width: 200px;
+  margin: 0 auto 1rem auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.featureImage {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: var(--border-radius-images);
+  display: block;
+  margin: 0 auto;
+}
+
+.courseTimeline {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid var(--ifm-color-primary);
+}
+
+.timelineRow {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.timelineRow:last-child {
+  border-bottom: none;
+}
+
+[data-theme='dark'] .courseTimeline {
+  background-color: #242526;
+  border-left: 4px solid var(--ifm-color-primary);
+}
+
+[data-theme='dark'] .timelineRow {
+  border-bottom: 1px solid #444;
+}

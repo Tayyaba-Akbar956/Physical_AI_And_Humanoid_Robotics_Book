@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Robot head as main symbol -->
+  <rect x="70" y="60" width="60" height="60" rx="10" fill="#4F5B93" />
+  
+  <!-- Eyes -->
+  <circle cx="90" cy="85" r="5" fill="#FFFFFF" />
+  <circle cx="110" cy="85" r="5" fill="#FFFFFF" />
+  
+  <!-- Mouth -->
+  <rect x="90" y="100" width="20" height="5" rx="2" fill="#FFFFFF" />
+  
+  <!-- Antenna -->
+  <line x1="100" y1="60" x2="100" y2="40" stroke="#4F5B93" stroke-width="3" />
+  <circle cx="100" cy="35" r="5" fill="#4F5B93" />
+  
+  <!-- Circuit lines -->
+  <path d="M80 90 Q90 85 100 90 Q110 95 120 90" stroke="#FFFFFF" stroke-width="1.5" fill="none" />
+  
+  <!-- Text: Physical AI -->
+  <text x="40" y="150" font-family="Arial, sans-serif" font-size="12" fill="#4F5B93" font-weight="bold">Physical AI</text>
+  <text x="40" y="165" font-family="Arial, sans-serif" font-size="10" fill="#4F5B93">Humanoid Robotics</text>
+</svg>
