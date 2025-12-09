@@ -1,5 +1,7 @@
 # Physical AI & Humanoid Robotics Textbook
 
+## 📚 [Read the Live Book Here](https://tayyaba-akbar956.github.io/Physical_AI_And_Humanoid_Robotics_Book/)
+
 This repository contains a comprehensive educational textbook that teaches students how to design, simulate, and deploy humanoid robots that can interact naturally with the physical world. The book transforms abstract AI concepts into tangible robotic applications, bridging the gap between digital intelligence and physical embodiment.
 
 ## About
