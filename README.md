@@ -1,4 +1,4 @@
-# RAG Chatbot for Physical AI & Humanoid Robotics Textbook
+# Physical AI & Humanoid Robotics Textbook with RAG Chatbot
 
 An intelligent chatbot that helps students with the Physical AI & Humanoid Robotics textbook using Retrieval-Augmented Generation.
 
