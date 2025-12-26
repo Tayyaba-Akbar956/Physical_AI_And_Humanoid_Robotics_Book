@@ -154,3 +154,11 @@ build/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Project specific temporary files
+.vercel/
+.docusaurus/
+.claude/
+.history/
+.src/utils/
+backend/Dockerfile
