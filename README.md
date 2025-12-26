@@ -125,13 +125,56 @@ To embed the chatbot in the textbook website:
 ## Configuration
 
 ### Environment Variables
-- `GEMINI_API_KEY`: API key for GEMINI service
-- `NEON_DB_URL`: Connection string for Neon Postgres database
-- `QDRANT_URL`: URL for Qdrant vector database
-- `QDRANT_API_KEY`: API key for Qdrant service
+Create a `.env` file with the following variables:
+
+```env
+# GEMINI API Configuration
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Qdrant Vector Database Configuration
+QDRANT_URL=your_qdrant_url_here
+QDRANT_API_KEY=your_qdrant_api_key_here
+
+# Neon Database Configuration
+NEON_DB_URL=your_neon_db_url_here
+
+# Application Configuration
+PORT=8000
+DEBUG=false
+ALLOWED_ORIGINS=http://localhost:3000,https://yourdomain.com
+```
 
 ### Module Context
 The system automatically detects the current module from the URL path. To manually set the module context, use the `/api/module-context/set` endpoint.
+
+## Deployment
+
+### Production Deployment
+For production deployment, see the [DEPLOYMENT.md](DEPLOYMENT.md) guide for complete instructions.
+
+### Frontend Integration
+The frontend widget can be configured with different API endpoints:
+
+1. **Via Script Data Attribute:**
+   ```html
+   <script src="/frontend/rag-widget/embed-script.js" data-api-url="https://yourdomain.com/api"></script>
+   ```
+
+2. **Via Meta Tag:**
+   ```html
+   <meta name="rag-chatbot-api-url" content="https://yourdomain.com/api">
+   <script src="/frontend/rag-widget/embed-script.js"></script>
+   ```
+
+3. **Via Global Configuration:**
+   ```html
+   <script>
+     window.RAG_CHATBOT_CONFIG = {
+       apiUrl: 'https://yourdomain.com/api'
+     };
+   </script>
+   <script src="/frontend/rag-widget/embed-script.js"></script>
+   ```
 
 ## Architecture
 

@@ -6,13 +6,38 @@
 (function() {
     // Configuration
     const CONFIG = {
-        apiUrl: 'http://localhost:8000', // Default API URL, should be configurable
+        apiUrl: getApiUrl(), // Get API URL from data attribute or fallback to default
         containerId: 'rag-chatbot-container',
         initialModule: 'module-1-introduction', // Will be replaced based on current page
         widgetTitle: 'Textbook Assistant',
         primaryColor: '#3498db',
         secondaryColor: '#2c3e50'
     };
+
+    // Function to get API URL from data attribute or environment
+    function getApiUrl() {
+        // Try to get from script data attribute first
+        const script = document.currentScript || document.querySelector('script[src*="embed-script"]');
+        if (script && script.dataset.apiUrl) {
+            return script.dataset.apiUrl;
+        }
+
+        // Try to get from meta tag
+        const metaTag = document.querySelector('meta[name="rag-chatbot-api-url"]');
+        if (metaTag && metaTag.content) {
+            return metaTag.content;
+        }
+
+        // Try to get from window object (for configuration via script)
+        if (window.RAG_CHATBOT_CONFIG && window.RAG_CHATBOT_CONFIG.apiUrl) {
+            return window.RAG_CHATBOT_CONFIG.apiUrl;
+        }
+
+        // Fallback to environment-specific URL or localhost
+        return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:8000'
+            : 'https://yourdomain.com/api'; // Replace with your production API URL
+    }
 
     // Create the chatbot container
     function createChatbotContainer() {
