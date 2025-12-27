@@ -19,8 +19,19 @@
       "dest": "/backend/api.py"
     },
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "src": "/frontend/(.*)",
+      "dest": "/frontend/$1"
+    },
+    {
+      "src": "/(.+)",
+      "dest": "/build/$1",
+      "headers": {
+        "cache-control": "public, max-age=0, must-revalidate"
+      }
+    },
+    {
+      "src": "/",
+      "dest": "/build/index.html"
     }
   ]
 }

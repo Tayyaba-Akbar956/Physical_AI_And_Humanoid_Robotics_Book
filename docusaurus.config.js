@@ -13,16 +13,13 @@ const config = {
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
-  url: 'https://tayyaba-akbar956.github.io',
+  url: 'https://physical-ai-book.vercel.app', // Updated for Vercel deployment
   // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/Physical_AI_And_Humanoid_Robotics_Book/',
+  // For Vercel deployment, use '/'
+  baseUrl: '/',
 
-  // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'Tayyaba-Akbar956', // Usually your GitHub org/user name.
-  projectName: 'Physical_AI_And_Humanoid_Robotics_Book', // Usually your repo name.
-  deploymentBranch: 'gh-pages', // Branch that GitHub Pages will deploy from
+  // Vercel deployment config.
+  // GitHub pages config removed for Vercel deployment
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
@@ -141,6 +138,55 @@ const config = {
         darkTheme: prismThemes.dracula,
       },
     }),
+  plugins: [
+    [
+      '@docusaurus/plugin-client-redirects',
+      {
+        fromExtensions: ['html'],
+        redirects: [
+          {
+            to: '/',
+            from: ['/index.html'],
+          },
+        ],
+      },
+    ],
+    async function myPlugin(context, options) {
+      return {
+        name: 'custom-webpack-plugin',
+        configureWebpack(config, isServer, utils) {
+          return {
+            resolve: {
+              alias: {
+                path: require.resolve('path-browserify'),
+              },
+            },
+          };
+        },
+      };
+    },
+    // Add the chatbot widget to the site
+    async function chatbotPlugin(context, options) {
+      return {
+        name: 'chatbot-plugin',
+        injectHtmlTags() {
+          return {
+            postBodyTags: [
+              // Add the chatbot widget script
+              {
+                tagName: 'script',
+                attributes: {
+                  src: '/frontend/rag-widget/embed-script.js',
+                  type: 'text/javascript',
+                  async: true,
+                },
+              },
+            ],
+          };
+        },
+      };
+    },
+  ],
 };
 
 export default config;
