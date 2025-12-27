@@ -36,7 +36,7 @@
         // Fallback to environment-specific URL or localhost
         return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:8000'
-            : 'https://yourdomain.com/api'; // Replace with your production API URL
+            : '/api';
     }
 
     // Create the chatbot container

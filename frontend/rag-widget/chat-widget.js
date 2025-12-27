@@ -7,32 +7,32 @@ class RAGChatWidget {
     constructor(containerId, options = {}) {
         this.containerId = containerId;
         this.options = {
-            apiUrl: options.apiUrl || 'http://localhost:8000',
+            apiUrl: options.apiUrl || '/api',
             initialModule: options.initialModule || 'module-1-introduction',
             ...options
         };
-        
+
         this.sessionId = null;
         this.currentModule = this.options.initialModule;
         this.messages = [];
         this.conversationHistory = [];
-        
+
         this.init();
     }
-    
+
     init() {
         this.createWidgetStructure();
         this.setupEventListeners();
         this.loadConversationHistory();
     }
-    
+
     createWidgetStructure() {
         const container = document.getElementById(this.containerId);
         if (!container) {
             console.error(`Container with ID ${this.containerId} not found`);
             return;
         }
-        
+
         container.innerHTML = `
             <div id="chat-header" class="rag-chat-header">
                 <h3>Textbook Assistant</h3>
@@ -48,30 +48,30 @@ class RAGChatWidget {
             </div>
         `;
     }
-    
+
     setupEventListeners() {
         document.getElementById('send-message').addEventListener('click', () => this.sendMessage());
         document.getElementById('user-message').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.sendMessage();
         });
-        
+
         document.getElementById('clear-history-btn').addEventListener('click', () => this.clearConversationHistory());
     }
-    
+
     async sendMessage() {
         const inputElement = document.getElementById('user-message');
         const message = inputElement.value.trim();
-        
+
         if (!message) return;
-        
+
         // Add user message to UI
         this.addMessageToUI('user', message);
         inputElement.value = '';
-        
+
         try {
             // Show typing indicator
             this.showTypingIndicator();
-            
+
             // Send to backend
             const response = await fetch(`${this.options.apiUrl}/api/chat/query`, {
                 method: 'POST',
@@ -84,20 +84,20 @@ class RAGChatWidget {
                     session_id: this.sessionId || null
                 })
             });
-            
+
             const data = await response.json();
-            
+
             // Store session ID for future requests
             if (data.session_id && !this.sessionId) {
                 this.sessionId = data.session_id;
             }
-            
+
             // Hide typing indicator
             this.hideTypingIndicator();
-            
+
             // Add bot response to UI
             this.addMessageToUI('bot', data.response, data.citations);
-            
+
             // Update conversation history
             this.conversationHistory.push({
                 sender: 'user',
@@ -110,19 +110,19 @@ class RAGChatWidget {
                 citations: data.citations,
                 timestamp: new Date().toISOString()
             });
-            
+
         } catch (error) {
             console.error('Error sending message:', error);
             this.hideTypingIndicator();
             this.addMessageToUI('bot', 'Sorry, I encountered an error processing your request. Please try again.');
         }
     }
-    
+
     addMessageToUI(sender, content, citations = []) {
         const messagesContainer = document.getElementById('chat-messages');
         const messageDiv = document.createElement('div');
         messageDiv.className = `rag-message rag-message-${sender}`;
-        
+
         // Format citations if present
         let contentWithCitations = content;
         if (citations.length > 0) {
@@ -133,18 +133,18 @@ class RAGChatWidget {
             });
             contentWithCitations += '</ul></div>';
         }
-        
+
         messageDiv.innerHTML = `
             <div class="rag-message-content">${contentWithCitations}</div>
             <div class="rag-message-timestamp">${new Date().toLocaleTimeString()}</div>
         `;
-        
+
         messagesContainer.appendChild(messageDiv);
-        
+
         // Scroll to bottom
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
-    
+
     showTypingIndicator() {
         const messagesContainer = document.getElementById('chat-messages');
         const typingDiv = document.createElement('div');
@@ -152,31 +152,31 @@ class RAGChatWidget {
         typingDiv.className = 'rag-typing-indicator';
         typingDiv.innerHTML = 'Assistant is typing...';
         messagesContainer.appendChild(typingDiv);
-        
+
         // Scroll to bottom
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
-    
+
     hideTypingIndicator() {
         const typingIndicator = document.getElementById('typing-indicator');
         if (typingIndicator) {
             typingIndicator.remove();
         }
     }
-    
+
     async loadConversationHistory() {
         // If we have a session, try to load its history
         if (this.sessionId) {
             try {
                 const response = await fetch(`${this.options.apiUrl}/api/conversation/history/${this.sessionId}`);
                 const data = await response.json();
-                
+
                 if (data.messages && data.messages.length > 0) {
                     this.conversationHistory = [...data.messages];
-                    
+
                     // Clear current messages and load history
                     document.getElementById('chat-messages').innerHTML = '';
-                    
+
                     this.conversationHistory.forEach(message => {
                         this.addMessageToUI(
                             message.sender_type === 'student' ? 'user' : 'bot',
@@ -190,18 +190,18 @@ class RAGChatWidget {
             }
         }
     }
-    
+
     async clearConversationHistory() {
         if (this.sessionId) {
             try {
                 await fetch(`${this.options.apiUrl}/api/session/${this.sessionId}/clear`, {
                     method: 'POST'
                 });
-                
+
                 // Clear UI
                 document.getElementById('chat-messages').innerHTML = '';
                 this.conversationHistory = [];
-                
+
                 // Add welcome message
                 this.addMessageToUI('bot', 'Conversation history cleared. How can I help you today?');
             } catch (error) {
@@ -209,13 +209,13 @@ class RAGChatWidget {
             }
         }
     }
-    
+
     // Method to update module context
     updateModuleContext(newModule) {
         this.currentModule = newModule;
         document.getElementById('current-module').textContent = newModule;
     }
-    
+
     // Method to get conversation context for the RAG agent
     getRecentConversationContext(limit = 10) {
         return this.conversationHistory.slice(-limit).map(msg => ({
