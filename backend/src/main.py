@@ -48,26 +48,31 @@ app.add_middleware(ErrorHandlingMiddleware)
 app.add_middleware(LoggingMiddleware)
 
 # Add CORS middleware
-allowed_origins_raw = os.getenv("ALLOWED_ORIGINS", "http://localhost,http://localhost:3000")
-allowed_origins = [origin.strip() for origin in allowed_origins_raw.split(",") if origin.strip()]
+allowed_origins_raw = os.getenv("ALLOWED_ORIGINS", "*")
+if allowed_origins_raw == "*":
+    allowed_origins = ["*"]
+else:
+    allowed_origins = [origin.strip() for origin in allowed_origins_raw.split(",") if origin.strip()]
 
-# Add wildcard and additional Vercel domains if not present for better resilience
-# This helps handle different Vercel deployment URLs (like preview or branch URLs)
+# Add Vercel-specific origins if not already covered
 if "*" not in allowed_origins:
-    # Explicitly include the user's observed Vercel domain patterns
-    vercel_patterns = ["physical-ai-book.vercel.app", "physical-ai-book-five-ivory.vercel.app"]
+    if os.getenv("VERCEL_URL"):
+        allowed_origins.append(f"https://{os.getenv('VERCEL_URL')}")
+    
+    # Common Vercel patterns for the project
+    vercel_patterns = [
+        "https://physical-ai-book.vercel.app",
+        "https://physical-ai-book-five-ivory.vercel.app"
+    ]
     for pattern in vercel_patterns:
-        full_origin = f"https://{pattern}"
-        if full_origin not in allowed_origins:
-            # We check if the user has any of these patterns in their allowed origins or if we're on Vercel
-            allowed_origins.append(full_origin)
-            allowed_origins.append(f"{full_origin}/") # Include trailing slash variant
+        if pattern not in allowed_origins:
+            allowed_origins.append(pattern)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
