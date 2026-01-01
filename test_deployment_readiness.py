@@ -36,7 +36,7 @@ def test_frontend_config():
     print("\nTesting frontend configuration...")
 
     # Check if embed script has configurable API URL
-    with open("frontend/rag-widget/embed-script.js", "r") as f:
+    with open("static/frontend/rag-widget/embed-script.js", "r") as f:
         embed_content = f.read()
         if "getApiUrl" in embed_content and ("data-api-url" in embed_content or "dataset.apiUrl" in embed_content):
             print("PASS: Frontend API URL is configurable")
