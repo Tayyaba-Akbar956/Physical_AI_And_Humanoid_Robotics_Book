@@ -2,9 +2,18 @@
 
 An intelligent chatbot that helps students with the Physical AI & Humanoid Robotics textbook using Retrieval-Augmented Generation.
 
-## Deployment
+## ⚠️ Deployment Notice
 
-For detailed instructions on how to deploy this project (Frontend on Vercel, Backend on Render), please see the [Deployment Guide](DEPLOYMENT.md).
+This project uses separate Vercel deployments for frontend and backend.
+
+**Known Limitations on Vercel:**
+- 10-second timeout on Hobby plan (may cause RAG queries to fail)
+- Cold starts: First request after inactivity takes 5-10 seconds
+- No persistent connections to databases
+
+For production use, consider deploying backend on Render, Railway, or Fly.io.
+
+See [VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md) for full deployment guide.
 
 ## Features
 

@@ -16,6 +16,13 @@ from ..db.connection import get_db
 from ..models.chat_session import ChatSessionCreate
 from .validation_utils import ChatQueryRequest, validate_request_and_respond
 
+# Serverless optimizations
+TIMEOUT_LIMIT = int(os.getenv("TIMEOUT_WARNING_SECONDS", "8"))
+query_cache = {}  # Simple in-memory cache for common queries
+
+def get_cache_key(request: ChatQueryRequest):
+    return f"{request.message[:100]}_{request.module_context}_{request.selected_text}"
+
 
 # Performance monitoring utilities
 class PerformanceMonitor:
@@ -236,15 +243,55 @@ async def chat_query(request: ChatQueryRequest):
         if not user_message:
             raise HTTPException(status_code=500, detail="Failed to store user message")
 
-        # Get response from RAG agent with enhanced conversation context
-        response_data = await get_rag_agent_service().answer_question(
-            query=actual_query,
-            session_id=str(session_id),
-            module_context=request.module_context,
-            selected_text=request.selected_text,
-            conversation_context=conversation_context,  # Pass conversation context to RAG agent
-            context_window_size=10  # Use a context window of 10 exchanges
-        )
+        # Simple query preprocessing for greetings
+        greetings = ["hi", "hello", "hey", "how are you", "good morning", "good afternoon", "good evening"]
+        if request.message.lower().strip() in greetings:
+            return ChatQueryResponse(
+                session_id=str(session_id),
+                response_id=str(uuid4()),
+                message="Hello! I'm your Physical AI & Humanoid Robotics assistant. How can I help you with your textbook today?",
+                citations=[],
+                timestamp=datetime.utcnow().isoformat(),
+                validation_result={"valid": True, "preprocessed": True}
+            )
+
+        # Check cache first
+        cache_key = get_cache_key(request)
+        if cache_key in query_cache:
+            cache_entry = query_cache[cache_key]
+            # Verify if it's still fresh (within 1 hour)
+            if time.time() - cache_entry["timestamp"] < 3600:
+                return ChatQueryResponse(
+                    session_id=str(session_id),
+                    response_id=str(uuid4()),
+                    message=cache_entry["response"],
+                    citations=cache_entry["citations"],
+                    timestamp=datetime.utcnow().isoformat(),
+                    validation_result={"valid": True, "cached": True}
+                )
+
+        # Get response from RAG agent with enhanced conversation context and timeout
+        try:
+            response_data = await asyncio.wait_for(
+                get_rag_agent_service().answer_question(
+                    query=actual_query,
+                    session_id=str(session_id),
+                    module_context=request.module_context,
+                    selected_text=request.selected_text,
+                    conversation_context=conversation_context,
+                    context_window_size=10
+                ),
+                timeout=TIMEOUT_LIMIT
+            )
+        except asyncio.TimeoutError:
+            return ChatQueryResponse(
+                session_id=str(session_id),
+                response_id=str(uuid4()),
+                message="I'm sorry, the retrieval process is taking longer than expected due to serverless limitations. Please try a simpler question or try again in a moment.",
+                citations=[],
+                timestamp=datetime.utcnow().isoformat(),
+                validation_result={"valid": True, "error": "timeout"}
+            )
 
         # If response indicates no relevant content found, provide appropriate message
         if not response_data.get("response") or "couldn't find relevant information" in response_data.get("response", "").lower():
@@ -253,6 +300,13 @@ async def chat_query(request: ChatQueryRequest):
         else:
             response_text = response_data["response"]
             citations = response_data.get("citations", [])
+            
+            # Cache the successful response
+            query_cache[cache_key] = {
+                "response": response_text,
+                "citations": citations,
+                "timestamp": time.time()
+            }
 
         # Add AI response to session with conversation context
         ai_message = get_session_manager_service().add_message_to_session(

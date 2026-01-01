@@ -8,12 +8,15 @@ import os
 import sys
 from pathlib import Path
 
+# Get root path
+root_path = Path(__file__).parent.absolute()
+
 def test_env_config():
     """Test environment configuration"""
     print("Testing environment configuration...")
-
+    
     # Check if .env.example exists
-    env_example_path = Path(".env.example")
+    env_example_path = root_path / ".env.example"
     if env_example_path.exists():
         print("PASS: .env.example file exists")
     else:
@@ -21,7 +24,7 @@ def test_env_config():
         return False
 
     # Check if environment variables are referenced in main.py
-    with open("backend/src/main.py", "r") as f:
+    with open(root_path / "backend/src/main.py", "r", encoding="utf-8") as f:
         main_content = f.read()
         if "ALLOWED_ORIGINS" in main_content and "os.getenv" in main_content:
             print("PASS: Environment variables properly configured in backend")
@@ -36,7 +39,7 @@ def test_frontend_config():
     print("\nTesting frontend configuration...")
 
     # Check if embed script has configurable API URL
-    with open("static/frontend/rag-widget/embed-script.js", "r") as f:
+    with open(root_path / "static/frontend/rag-widget/embed-script.js", "r", encoding="utf-8") as f:
         embed_content = f.read()
         if "getApiUrl" in embed_content and ("data-api-url" in embed_content or "dataset.apiUrl" in embed_content):
             print("PASS: Frontend API URL is configurable")
@@ -50,12 +53,16 @@ def test_readme_update():
     """Test if README has deployment information"""
     print("\nTesting README deployment information...")
 
-    with open("README.md", "r") as f:
+    with open(root_path / "README.md", "r", encoding="utf-8") as f:
         readme_content = f.read()
-        if "Deployment" in readme_content or "environment" in readme_content.lower():
-            print("PASS: README contains deployment information")
-        else:
-            print("INFO: README could be enhanced with deployment information")
+    
+    # Check for keywords related to deployment
+    deploy_keywords = ["Deployment", "Vercel", "Render", "Guide"]
+    passed = any(keyword in readme_content for keyword in deploy_keywords)
+    if passed:
+        print("PASS: README contains deployment information")
+    else:
+        print("INFO: README could be enhanced with deployment information")
 
     return True
 

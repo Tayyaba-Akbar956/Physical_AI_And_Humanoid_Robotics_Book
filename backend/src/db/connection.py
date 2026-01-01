@@ -16,6 +16,9 @@ if DATABASE_URL:
     engine = create_engine(
         DATABASE_URL,
         pool_pre_ping=True,  # Verify connections before using them
+        pool_size=5,         # Small pool for serverless
+        max_overflow=10,     # Allow some overflow
+        pool_timeout=30,      # Timeout for getting a connection
         echo=False
     )
 else:

@@ -18,21 +18,28 @@
 
     // Function to get API URL
     const getApiUrl = () => {
+        // Check build-time environment variable
         if (typeof process !== 'undefined' && process.env.REACT_APP_API_URL) {
-            return process.env.REACT_APP_API_URL.replace(/\/$/, '');
+            return process.env.REACT_APP_API_URL;
         }
+
+        // Check runtime meta tag
         const metaTag = document.querySelector('meta[name="rag-chatbot-api-url"]');
-        if (metaTag && metaTag.content) {
-            return metaTag.content.replace(/\/$/, '');
+        if (metaTag?.content) {
+            return metaTag.content;
         }
-        const script = document.currentScript || document.querySelector('script[src*="embed-script"]');
-        if (script && script.dataset.apiUrl) {
-            return script.dataset.apiUrl.replace(/\/$/, '');
+
+        // Check script data attribute
+        const script = document.querySelector('script[data-api-url]');
+        if (script?.dataset?.apiUrl) {
+            return script.dataset.apiUrl;
         }
-        if (window.RAG_CHATBOT_CONFIG && window.RAG_CHATBOT_CONFIG.apiUrl) {
-            return window.RAG_CHATBOT_CONFIG.apiUrl.replace(/\/$/, '');
+
+        // Check global config
+        if (window.RAG_CHATBOT_CONFIG?.apiUrl) {
+            return window.RAG_CHATBOT_CONFIG.apiUrl;
         }
-        
+
         // Default fallback
         return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:8000'
@@ -160,19 +167,34 @@
                     height: calc(100vh - 120px) !important;
                 }
             }
+            .rag-loading { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; border-top-color: ${CONFIG.primaryColor}; animation: spin 0.8s linear infinite; }
+            @keyframes spin { to { transform: rotate(360deg); } }
         `;
         document.head.appendChild(style);
 
         return container;
     }
 
-    async function sendMessage() {
+    async function sendMessage(retryCount = 0) {
         const input = document.getElementById('rag-user-input');
         const message = input.value.trim();
-        if (!message) return;
+        if (!message && retryCount === 0) return;
 
-        addMessageToChat('user', message);
-        input.value = '';
+        if (retryCount === 0) {
+            addMessageToChat('user', message);
+            input.value = '';
+        }
+
+        const chatArea = document.getElementById('rag-chat-area');
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = 'rag-loading-state';
+        loadingDiv.innerHTML = '<div class="rag-loading"></div> <span style="font-size: 12px; color: #666; vertical-align: middle; margin-left: 5px;">Assistant is thinking (may take a moment on cold start)...</span>';
+        loadingDiv.style.cssText = 'padding: 10px; margin-bottom: 12px;';
+        chatArea.appendChild(loadingDiv);
+        chatArea.scrollTop = chatArea.scrollHeight;
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout for UI
 
         try {
             const currentModule = getCurrentModuleContext();
@@ -180,11 +202,17 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    message: message,
+                    message: message || lastMessage,
                     module_context: currentModule,
                     session_id: window.ragChatbotSessionId || null
-                })
+                }),
+                signal: controller.signal
             });
+
+            clearTimeout(timeoutId);
+            if (document.getElementById('rag-loading-state')) {
+                document.getElementById('rag-loading-state').remove();
+            }
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
@@ -194,13 +222,27 @@
             const data = await response.json();
             if (data.session_id) window.ragChatbotSessionId = data.session_id;
             addMessageToChat('bot', data.message);
+            if (message) window.lastMessage = message;
         } catch (error) {
+            clearTimeout(timeoutId);
+            if (document.getElementById('rag-loading-state')) {
+                document.getElementById('rag-loading-state').remove();
+            }
+
             console.error('Error sending message:', error);
+
+            if (error.name === 'AbortError' && retryCount < 1) {
+                console.log('Request timed out, retrying once...');
+                return sendMessage(retryCount + 1);
+            }
+
             let userError = 'Sorry, I encountered an error.';
-            if (error.message.includes('HTTP error') || error.message.includes('Server error')) {
+            if (error.name === 'AbortError') {
+                userError = 'Retrieval is taking longer than expected (serverless cold start). Please try again in a few seconds.';
+            } else if (error.message.includes('Server error')) {
                 userError += ` (Detail: ${error.message})`;
             } else if (error.name === 'TypeError') {
-                userError += ' (Network error: Check your connection)';
+                userError += ' (Network error: Check your connection or API URL)';
             } else {
                 userError += ` (${error.message})`;
             }
@@ -239,7 +281,8 @@
         createLauncher();
         createChatbotContainer();
         setTimeout(() => {
-            if (document.getElementById('rag-chat-area').children.length === 0) {
+            const chatArea = document.getElementById('rag-chat-area');
+            if (chatArea && chatArea.children.length === 0) {
                 addMessageToChat('bot', 'Hello! I\'m your Physical AI assistant. How can I help you today?');
             }
         }, 1000);
