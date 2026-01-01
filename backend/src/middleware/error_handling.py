@@ -1,3 +1,4 @@
+import os
 from fastapi import Request, HTTPException, status
 from fastapi.responses import JSONResponse
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -79,7 +80,7 @@ class ErrorHandlingMiddleware:
         }
         
         response = JSONResponse(
-            status_code=status_code if 'status_code' in locals() else 500,
+            status_code=500,
             content=response_content
         )
         await response(scope, receive, send)

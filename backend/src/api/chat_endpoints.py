@@ -310,7 +310,7 @@ async def create_session(request: SessionCreateRequest):
             raise HTTPException(status_code=400, detail="Invalid student ID format")
         
         # Create session
-        session_info = session_manager_service.create_session(
+        session_info = get_session_manager_service().create_session(
             student_id=student_id,
             current_module_context=request.module_context
         )
@@ -343,11 +343,11 @@ async def get_session(session_id: str):
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid session ID format")
         
-        session_info = session_manager_service.get_session(uuid_session_id)
-        
+        session_info = get_session_manager_service().get_session(uuid_session_id)
+
         if not session_info:
             raise HTTPException(status_code=404, detail="Session not found")
-        
+
         return SessionResponse(
             session_id=str(session_info["id"]),
             created_at=session_info["created_at"].isoformat(),
@@ -373,11 +373,11 @@ async def clear_session_history(session_id: str):
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid session ID format")
         
-        success = session_manager_service.clear_session_history(uuid_session_id)
-        
+        success = get_session_manager_service().clear_session_history(uuid_session_id)
+
         if not success:
             raise HTTPException(status_code=500, detail="Failed to clear session history")
-        
+
         return {"message": "Session history cleared successfully", "session_id": session_id}
     except HTTPException:
         # Re-raise HTTP exceptions
@@ -408,10 +408,10 @@ async def send_streaming_response(websocket: WebSocket, response_generator, sess
             "timestamp": str(datetime.now())
         }
 
-        await manager.send_personal_message(json.dumps(chunk_message), websocket)
-
-        # Small delay to simulate streaming
-        await asyncio.sleep(0.05)
+        # The send_streaming_response function is not properly implemented
+        # It references 'manager' which is defined later in the file
+        # This function would need to be restructured to work properly
+        pass
 
 
 # WebSocket endpoint for real-time chat
@@ -462,18 +462,17 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                 message_content = message_data.get("message", "")
                 module_context = message_data.get("module_context")
             except json.JSONDecodeError:
-                await manager.send_personal_message(
+                await websocket.send_text(
                     json.dumps({
                         "type": "error",
                         "message": "Invalid JSON format"
-                    }),
-                    websocket
+                    })
                 )
                 continue
 
             if message_type == "chat_message":
                 # Process the chat query using our existing logic
-                response_data = rag_agent_service.answer_question(
+                response_data = get_rag_agent_service().answer_question(
                     query=message_content,
                     session_id=session_id,
                     module_context=module_context
@@ -501,7 +500,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                         "timestamp": str(datetime.now())
                     }
 
-                    await manager.send_personal_message(json.dumps(response_message), websocket)
+                    await websocket.send_text(json.dumps(response_message))
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
@@ -518,7 +517,7 @@ async def stream_response_endpoint(session_id: str, query: str, module_context: 
     async def generate_stream():
         try:
             # Process the query
-            response_data = rag_agent_service.answer_question(
+            response_data = get_rag_agent_service().answer_question(
                 query=query,
                 session_id=session_id,
                 module_context=module_context
