@@ -3,68 +3,112 @@
  * This script embeds the RAG Chatbot widget into the Physical AI & Humanoid Robotics textbook website
  */
 
-(function() {
+(function () {
+    // Configuration
     // Configuration
     const CONFIG = {
-        apiUrl: getApiUrl(), // Get API URL from data attribute or fallback to default
+        apiUrl: getApiUrl(),
         containerId: 'rag-chatbot-container',
-        initialModule: 'module-1-introduction', // Will be replaced based on current page
+        launcherId: 'rag-chatbot-launcher',
+        initialModule: 'module-1-introduction',
         widgetTitle: 'Textbook Assistant',
-        primaryColor: '#3498db',
-        secondaryColor: '#2c3e50'
+        primaryColor: '#a832ff', // Purple theme
+        secondaryColor: '#1a1a2e' // Dark background
     };
 
-    // Function to get API URL from data attribute or environment
+    // Function to get API URL
     function getApiUrl() {
-        // Try to get from script data attribute first
         const script = document.currentScript || document.querySelector('script[src*="embed-script"]');
         if (script && script.dataset.apiUrl) {
-            return script.dataset.apiUrl;
+            return script.dataset.apiUrl.replace(/\/$/, '');
         }
 
-        // Try to get from meta tag
         const metaTag = document.querySelector('meta[name="rag-chatbot-api-url"]');
         if (metaTag && metaTag.content) {
-            return metaTag.content;
+            return metaTag.content.replace(/\/$/, '');
         }
 
-        // Try to get from window object (for configuration via script)
         if (window.RAG_CHATBOT_CONFIG && window.RAG_CHATBOT_CONFIG.apiUrl) {
-            return window.RAG_CHATBOT_CONFIG.apiUrl;
+            return window.RAG_CHATBOT_CONFIG.apiUrl.replace(/\/$/, '');
         }
 
-        // Fallback to environment-specific URL or localhost
+        // Return empty string for same-origin or absolute URL if needed
         return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:8000'
-            : '/api';
+            : '';
+    }
+
+    // Create the launcher button
+    function createLauncher() {
+        let launcher = document.getElementById(CONFIG.launcherId);
+        if (launcher) return launcher;
+
+        launcher = document.createElement('div');
+        launcher.id = CONFIG.launcherId;
+        launcher.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: ${CONFIG.primaryColor};
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10001;
+            transition: transform 0.3s ease;
+        `;
+        launcher.innerHTML = `
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+        `;
+
+        launcher.addEventListener('click', toggleChat);
+        launcher.addEventListener('mouseover', () => launcher.style.transform = 'scale(1.1)');
+        launcher.addEventListener('mouseout', () => launcher.style.transform = 'scale(1)');
+
+        document.body.appendChild(launcher);
+        return launcher;
+    }
+
+    // Toggle chat visibility
+    function toggleChat() {
+        const container = document.getElementById(CONFIG.containerId);
+        if (container.style.display === 'none') {
+            container.style.display = 'flex';
+        } else {
+            container.style.display = 'none';
+        }
     }
 
     // Create the chatbot container
     function createChatbotContainer() {
-        // Check if container already exists
         let container = document.getElementById(CONFIG.containerId);
         if (container) return container;
 
-        // Create main container
         container = document.createElement('div');
         container.id = CONFIG.containerId;
         container.style.cssText = `
             position: fixed;
-            bottom: 20px;
+            bottom: 90px;
             right: 20px;
             width: 380px;
             height: 600px;
             z-index: 10000;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
             border-radius: 12px;
             overflow: hidden;
-            display: flex;
+            display: none;
             flex-direction: column;
             background: white;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            border: 1px solid #eee;
         `;
 
-        // Create header
         const header = document.createElement('div');
         header.style.cssText = `
             background: ${CONFIG.primaryColor};
@@ -77,62 +121,26 @@
         `;
         header.innerHTML = `
             <span style="font-weight: 600;">${CONFIG.widgetTitle}</span>
-            <button id="rag-close-btn" style="
-                background: none;
-                border: none;
-                color: white;
-                font-size: 18px;
-                cursor: pointer;
-            ">&times;</button>
+            <button id="rag-close-btn" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">&times;</button>
         `;
 
-        // Create chat area
         const chatArea = document.createElement('div');
         chatArea.id = 'rag-chat-area';
-        chatArea.style.cssText = `
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            background: #f9f9f9;
-        `;
+        chatArea.style.cssText = `flex: 1; overflow-y: auto; padding: 15px; background: #fff;`;
 
-        // Create input area
         const inputArea = document.createElement('div');
-        inputArea.style.cssText = `
-            padding: 15px;
-            border-top: 1px solid #eee;
-            display: flex;
-        `;
+        inputArea.style.cssText = `padding: 15px; border-top: 1px solid #eee; display: flex; background: #f8f9fa;`;
         inputArea.innerHTML = `
-            <input 
-                type="text" 
-                id="rag-user-input" 
-                placeholder="Ask a question about this textbook..."
-                style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-right: 10px;"
-            >
-            <button id="rag-send-btn" style="
-                background: ${CONFIG.primaryColor};
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 10px 15px;
-                cursor: pointer;
-            ">Send</button>
+            <input type="text" id="rag-user-input" placeholder="Ask a question..." style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-right: 10px; outline: none;">
+            <button id="rag-send-btn" style="background: ${CONFIG.primaryColor}; color: white; border: none; border-radius: 6px; padding: 10px 15px; cursor: pointer; font-weight: 600;">Send</button>
         `;
 
-        // Assemble the widget
         container.appendChild(header);
         container.appendChild(chatArea);
         container.appendChild(inputArea);
-
-        // Add to page
         document.body.appendChild(container);
 
-        // Add event listeners
-        document.getElementById('rag-close-btn').addEventListener('click', () => {
-            container.style.display = 'none';
-        });
-
+        document.getElementById('rag-close-btn').addEventListener('click', toggleChat);
         document.getElementById('rag-send-btn').addEventListener('click', sendMessage);
         document.getElementById('rag-user-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
@@ -141,28 +149,19 @@
         return container;
     }
 
-    // Send message to backend
     async function sendMessage() {
         const input = document.getElementById('rag-user-input');
         const message = input.value.trim();
         if (!message) return;
 
-        const chatArea = document.getElementById('rag-chat-area');
-        
-        // Add user message to chat
         addMessageToChat('user', message);
         input.value = '';
 
         try {
-            // Get current module context from page
             const currentModule = getCurrentModuleContext();
-            
-            // Send to backend
             const response = await fetch(`${CONFIG.apiUrl}/api/chat/query`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message: message,
                     module_context: currentModule,
@@ -170,126 +169,57 @@
                 })
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
-            
-            // Store session ID for future requests
-            if (data.session_id && !window.ragChatbotSessionId) {
-                window.ragChatbotSessionId = data.session_id;
-            }
-
-            // Add bot response to chat
+            if (data.session_id) window.ragChatbotSessionId = data.session_id;
             addMessageToChat('bot', data.message);
         } catch (error) {
             console.error('Error sending message:', error);
-            addMessageToChat('bot', 'Sorry, I encountered an error processing your request. Please try again.');
+            addMessageToChat('bot', 'Sorry, I encountered an error. Please check your connection or try again.');
         }
     }
 
-    // Add message to chat area
     function addMessageToChat(sender, message) {
         const chatArea = document.getElementById('rag-chat-area');
         const messageDiv = document.createElement('div');
-        messageDiv.style.cssText = `
-            margin-bottom: 15px;
-            display: flex;
-            ${sender === 'user' ? 'justify-content: flex-end;' : 'justify-content: flex-start;'}
-        `;
+        messageDiv.style.cssText = `margin-bottom: 12px; display: flex; ${sender === 'user' ? 'justify-content: flex-end;' : 'justify-content: flex-start;'}`;
 
         const bubble = document.createElement('div');
         bubble.style.cssText = `
-            max-width: 80%;
-            padding: 10px 15px;
-            border-radius: 18px;
-            ${sender === 'user' 
-                ? `background: ${CONFIG.primaryColor}; color: white;` 
-                : 'background: #e9ecef; color: #333;'};
+            max-width: 85%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.4;
+            ${sender === 'user'
+                ? `background: ${CONFIG.primaryColor}; color: white; border-bottom-right-radius: 2px;`
+                : 'background: #f0f0f0; color: #1a1a2e; border-bottom-left-radius: 2px;'};
         `;
         bubble.textContent = message;
-
         messageDiv.appendChild(bubble);
         chatArea.appendChild(messageDiv);
         chatArea.scrollTop = chatArea.scrollHeight;
     }
 
-    // Get current module context from the page
     function getCurrentModuleContext() {
-        // Try to extract module from URL or page metadata
         const pathParts = window.location.pathname.split('/');
-        if (pathParts.length > 1) {
-            const modulePart = pathParts.find(part => part.startsWith('module'));
-            if (modulePart) {
-                return modulePart;
-            }
-        }
-        
-        // Fallback to default module
-        return CONFIG.initialModule;
+        return pathParts.find(part => part.startsWith('module')) || CONFIG.initialModule;
     }
 
-    // Initialize drag functionality
-    function initDrag() {
-        const container = document.getElementById(CONFIG.containerId);
-        const header = container.querySelector('div[style*="background:"]');
-        
-        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-        
-        header.onmousedown = dragMouseDown;
-
-        function dragMouseDown(e) {
-            e = e || window.event;
-            e.preventDefault();
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            document.onmouseup = closeDragElement;
-            document.onmousemove = elementDrag;
-        }
-
-        function elementDrag(e) {
-            e = e || window.event;
-            e.preventDefault();
-            pos1 = pos3 - e.clientX;
-            pos2 = pos4 - e.clientY;
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            
-            const top = (container.offsetTop - pos2) + 'px';
-            const left = (container.offsetLeft - pos1) + 'px';
-            
-            // Keep within viewport
-            const maxTop = window.innerHeight - container.offsetHeight;
-            const maxLeft = window.innerWidth - container.offsetWidth;
-            
-            container.style.top = Math.max(0, Math.min(parseInt(top), maxTop)) + 'px';
-            container.style.left = Math.max(0, Math.min(parseInt(left), maxLeft)) + 'px';
-        }
-
-        function closeDragElement() {
-            document.onmouseup = null;
-            document.onmousemove = null;
-        }
-    }
-
-    // Initialize the chatbot when DOM is loaded
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            createChatbotContainer();
-            initDrag();
-            // Add initial bot message
-            setTimeout(() => {
-                addMessageToChat('bot', 'Hello! I\'m your textbook assistant. Ask me any questions about the content you\'re studying.');
-            }, 500);
-        });
-    } else {
+    function init() {
+        createLauncher();
         createChatbotContainer();
-        initDrag();
-        // Add initial bot message
         setTimeout(() => {
-            addMessageToChat('bot', 'Hello! I\'m your textbook assistant. Ask me any questions about the content you\'re studying.');
-        }, 500);
+            if (document.getElementById('rag-chat-area').children.length === 0) {
+                addMessageToChat('bot', 'Hello! I\'m your Physical AI assistant. How can I help you today?');
+            }
+        }, 1000);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
     }
 
 })();
