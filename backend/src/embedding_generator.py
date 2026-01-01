@@ -1,7 +1,7 @@
 import os
 import asyncio
 from typing import List, Dict, Any, Optional
-from google import generativeai as genai
+import httpx
 from dotenv import load_dotenv
 from .content_chunker import ChunkedContent
 
@@ -12,23 +12,17 @@ load_dotenv()
 # Get GEMINI API key from environment
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-def configure_genai():
+# Gemini REST Configuration
+GEMINI_REST_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:embedContent?key={key}"
+
+def check_gemini_config():
     """
-    Lazily configure the GEMINI client
+    Check if GEMINI_API_KEY is available
     """
     if not GEMINI_API_KEY:
-        print("Warning: GEMINI_API_KEY is not set. Google GenAI will not be configured.")
+        print("Warning: GEMINI_API_KEY is not set.")
         return False
-    
-    try:
-        genai.configure(api_key=GEMINI_API_KEY)
-        return True
-    except Exception as e:
-        print(f"Error configuring Google GenAI: {e}")
-        return False
-
-# Initialize the GEMINI client flag
-_genai_configured = False
+    return True
 
 
 class GeminiEmbeddingGenerator:
@@ -51,31 +45,35 @@ class GeminiEmbeddingGenerator:
         """
         Check if Gemini is configured
         """
-        global _genai_configured
-        if not _genai_configured:
-            _genai_configured = configure_genai()
-        return _genai_configured
+        return check_gemini_config()
     
     async def generate_embedding(self, text: str) -> Optional[List[float]]:
         """
-        Generate embedding for a single text using a thread to avoid blocking
+        Generate embedding for a single text using REST API
         """
         if not self.embedding_model_ready:
             print("Error: Gemini not configured. Check GEMINI_API_KEY.")
             return None
             
         try:
-            # genai.embed_content is a sync call
-            model_path = self.model_name if self.model_name.startswith("models/") else f"models/{self.model_name}"
-            response = await asyncio.to_thread(
-                genai.embed_content,
-                model=model_path,
-                content=text,
-                task_type="retrieval_query"
-            )
-            return response.get('embedding')
+            model_name = self.model_name if not self.model_name.startswith("models/") else self.model_name.replace("models/", "")
+            url = GEMINI_REST_URL.format(model=model_name, key=GEMINI_API_KEY)
+            
+            payload = {
+                "content": {
+                    "parts": [{"text": text}]
+                },
+                "taskType": "RETRIEVAL_QUERY"
+            }
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url, json=payload, timeout=30.0)
+                response.raise_for_status()
+                data = response.json()
+                
+            return data.get('embedding', {}).get('values')
         except Exception as e:
-            print(f"Error generating embedding for text: {e}")
+            print(f"Error generating embedding via REST: {e}")
             return None
     
     async def generate_embeddings_batch(self, texts: List[str]) -> List[Optional[List[float]]]:

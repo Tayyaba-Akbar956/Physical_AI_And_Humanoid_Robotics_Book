@@ -75,7 +75,6 @@ async def dependency_health_check() -> Dict[str, Any]:
     try:
         # Import and check GEMINI API connectivity
         import os
-        from openai import OpenAI
         from dotenv import load_dotenv
 
         load_dotenv()

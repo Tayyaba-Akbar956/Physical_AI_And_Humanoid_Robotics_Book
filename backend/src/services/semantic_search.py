@@ -165,10 +165,23 @@ class SemanticSearchService:
                 if emb:
                     all_embeddings.append(emb)
 
-            # Average the embeddings (simple approach)
+            # Average the embeddings (pure Python implementation to avoid numpy)
             if all_embeddings:
-                import numpy as np
-                avg_query_embedding = np.mean(all_embeddings, axis=0).tolist()
+                # Get the number of vectors and the dimension of each vector
+                num_vectors = len(all_embeddings)
+                vector_dim = len(all_embeddings[0])
+                
+                # Create a zero-initialized vector for the average
+                avg_query_embedding = [0.0] * vector_dim
+                
+                # Sum all vectors element-wise
+                for emb in all_embeddings:
+                    for i in range(vector_dim):
+                        avg_query_embedding[i] += emb[i]
+                
+                # Divide by the number of vectors
+                for i in range(vector_dim):
+                    avg_query_embedding[i] /= num_vectors
             else:
                 avg_query_embedding = original_embedding
 
