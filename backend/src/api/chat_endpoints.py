@@ -237,7 +237,7 @@ async def chat_query(request: ChatQueryRequest):
             raise HTTPException(status_code=500, detail="Failed to store user message")
 
         # Get response from RAG agent with enhanced conversation context
-        response_data = get_rag_agent_service().answer_question(
+        response_data = await get_rag_agent_service().answer_question(
             query=actual_query,
             session_id=str(session_id),
             module_context=request.module_context,
@@ -565,7 +565,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "chat",
-        "timestamp": str(asyncio.get_event_loop().time())
+        "timestamp": str(datetime.now().timestamp())
     }
 
 

@@ -76,7 +76,7 @@ class SemanticSearchService:
                 return []
 
             # Perform semantic search using Qdrant
-            search_results = self.qdrant_manager.search_similar(
+            search_results = await self.qdrant_manager.search_similar(
                 query_vector=query_embedding,
                 top_k=top_k,
                 filters=filters
@@ -173,7 +173,7 @@ class SemanticSearchService:
                 avg_query_embedding = original_embedding
 
             # Perform semantic search using the averaged embedding
-            search_results = self.qdrant_manager.search_similar(
+            search_results = await self.qdrant_manager.search_similar(
                 query_vector=avg_query_embedding,
                 top_k=top_k,
                 filters=filters
@@ -242,7 +242,7 @@ class SemanticSearchService:
                 return []
 
             # Perform semantic search using Qdrant
-            search_results = self.qdrant_manager.search_similar(
+            search_results = await self.qdrant_manager.search_similar(
                 query_vector=query_embedding,
                 top_k=top_k*2,  # Get more results to have options for hybrid ranking
                 filters=filters
@@ -332,7 +332,7 @@ class SemanticSearchService:
         results = []
         
         for content_id in content_ids:
-            embedding_data = self.qdrant_manager.get_embedding_by_id(content_id)
+            embedding_data = await self.qdrant_manager.get_embedding_by_id(content_id)
             if embedding_data:
                 payload = embedding_data["payload"]
                 results.append({
@@ -362,12 +362,12 @@ class SemanticSearchService:
         """
         try:
             # Get the content and its embedding
-            content_data = self.qdrant_manager.get_embedding_by_id(content_id)
+            content_data = await self.qdrant_manager.get_embedding_by_id(content_id)
             if not content_data:
                 return []
             
             # Perform semantic search using the content's own embedding
-            search_results = self.qdrant_manager.search_similar(
+            search_results = await self.qdrant_manager.search_similar(
                 query_vector=content_data["vector"],
                 top_k=top_k + 1  # +1 to exclude the original content
             )
@@ -550,7 +550,7 @@ class SemanticSearchService:
         Get statistics about the searchable content collection
         """
         try:
-            return self.qdrant_manager.get_collection_info()
+            return await self.qdrant_manager.get_collection_info()
         except Exception as e:
             print(f"Error getting collection stats: {e}")
             return None

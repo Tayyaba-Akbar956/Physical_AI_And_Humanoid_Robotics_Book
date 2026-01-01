@@ -47,31 +47,33 @@ class GeminiEmbeddingGenerator:
         self._embedding_model = None
     
     @property
-    def embedding_model(self):
+    def embedding_model_ready(self):
         """
-        Lazily initialize the embedding model
+        Check if Gemini is configured
         """
-        if self._embedding_model is None:
-            global _genai_configured
-            if not _genai_configured:
-                _genai_configured = configure_genai()
-            
-            if _genai_configured:
-                self._embedding_model = genai.EmbeddingModel(self.model_name)
-        return self._embedding_model
+        global _genai_configured
+        if not _genai_configured:
+            _genai_configured = configure_genai()
+        return _genai_configured
     
     async def generate_embedding(self, text: str) -> Optional[List[float]]:
         """
-        Generate embedding for a single text
+        Generate embedding for a single text using a thread to avoid blocking
         """
-        model = self.embedding_model
-        if not model:
-            print("Error: Embedding model not configured. Check GEMINI_API_KEY.")
+        if not self.embedding_model_ready:
+            print("Error: Gemini not configured. Check GEMINI_API_KEY.")
             return None
             
         try:
-            response = await model.embed_content(text)
-            return response.embedding
+            # genai.embed_content is a sync call
+            model_path = self.model_name if self.model_name.startswith("models/") else f"models/{self.model_name}"
+            response = await asyncio.to_thread(
+                genai.embed_content,
+                model=model_path,
+                content=text,
+                task_type="retrieval_query"
+            )
+            return response.get('embedding')
         except Exception as e:
             print(f"Error generating embedding for text: {e}")
             return None

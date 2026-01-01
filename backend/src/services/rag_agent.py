@@ -1,12 +1,14 @@
 import os
 from typing import Dict, List, Optional, Any
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import AsyncOpenAI
 from ..db.qdrant_client import QdrantManager
 from ..db.connection import get_db
 from ..models.textbook_content import TextbookContentDB
 from sqlalchemy.orm import Session
 import logging
+import asyncio
+from ..embedding_generator import GeminiEmbeddingGenerator
 
 
 # Load environment variables
@@ -42,7 +44,7 @@ class RAGAgentService:
                 return None
             
             try:
-                self._client = OpenAI(
+                self._client = AsyncOpenAI(
                     api_key=GEMINI_API_KEY,
                     base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
                 )
@@ -53,7 +55,7 @@ class RAGAgentService:
                 return None
         return self._client
         
-    def get_relevant_content(self, query: str, top_k: int = 5, module_filter: Optional[str] = None,
+    async def get_relevant_content(self, query: str, top_k: int = 5, module_filter: Optional[str] = None,
                             prioritize_current_module: bool = True) -> List[Dict[str, Any]]:
         """
         Retrieve relevant content from the textbook using semantic search
@@ -76,7 +78,7 @@ class RAGAgentService:
             logger.debug(f"Retrieving relevant content for query: '{query[:50]}...', top_k: {top_k}, module_filter: {module_filter}")
 
             # Use the search service with module prioritization if specified
-            search_results = self._search_with_module_awareness(
+            search_results = await self._search_with_module_awareness(
                 search_service,
                 query,
                 top_k,
@@ -92,7 +94,7 @@ class RAGAgentService:
             logger.error(f"Error retrieving relevant content for query '{query[:50]}...': {e}")
             return []
 
-    def _search_with_module_awareness(self, search_service: 'SemanticSearchService',
+    async def _search_with_module_awareness(self, search_service: 'SemanticSearchService',
                                     query: str, top_k: int, module_filter: Optional[str],
                                     prioritize_current_module: bool) -> List[Dict[str, Any]]:
         """
@@ -111,43 +113,22 @@ class RAGAgentService:
         try:
             # If we want to prioritize the current module, use the specialized search method
             if module_filter and prioritize_current_module:
-                import asyncio
-                try:
-                    loop = asyncio.get_event_loop()
-                except RuntimeError:
-                    # If no event loop, create a new one
-                    import asyncio
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-
-                search_results = loop.run_until_complete(
-                    search_service.search_with_module_prioritization(
-                        query=query,
-                        current_module=module_filter,
-                        top_k=top_k,
-                        prioritize_current_module=prioritize_current_module
-                    )
+                search_results = await search_service.search_with_module_prioritization(
+                    query=query,
+                    current_module=module_filter,
+                    top_k=top_k,
+                    prioritize_current_module=prioritize_current_module
                 )
             else:
                 # For regular search or when not prioritizing current module
-                import asyncio
-                try:
-                    loop = asyncio.get_event_loop()
-                except RuntimeError:
-                    import asyncio
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-
                 filters = {}
                 if module_filter:
                     filters["module_id"] = module_filter
 
-                search_results = loop.run_until_complete(
-                    search_service.search(
-                        query=query,
-                        top_k=top_k,
-                        filters=filters
-                    )
+                search_results = await search_service.search(
+                    query=query,
+                    top_k=top_k,
+                    filters=filters
                 )
 
             # Format results to match the expected structure
@@ -170,9 +151,9 @@ class RAGAgentService:
         except Exception as e:
             print(f"Error in module-aware search: {e}")
             # Fallback to basic search
-            return self._basic_search_fallback(query, top_k, module_filter)
+            return await self._basic_search_fallback(query, top_k, module_filter)
 
-    def _basic_search_fallback(self, query: str, top_k: int, module_filter: Optional[str]) -> List[Dict[str, Any]]:
+    async def _basic_search_fallback(self, query: str, top_k: int, module_filter: Optional[str]) -> List[Dict[str, Any]]:
         """
         Basic fallback search method if the enhanced search fails
 
@@ -190,8 +171,9 @@ class RAGAgentService:
             if module_filter:
                 filters["module_id"] = module_filter
 
-            search_results = self.qdrant_manager.search_similar(
-                query_vector=self._generate_query_embedding(query),
+            query_embedding = await self._generate_query_embedding(query)
+            search_results = await self.qdrant_manager.search_similar(
+                query_vector=query_embedding,
                 top_k=top_k,
                 filters=filters
             )
@@ -217,21 +199,26 @@ class RAGAgentService:
             print(f"Error in basic search fallback: {e}")
             return []
 
-    def _generate_query_embedding(self, query: str) -> List[float]:
+    async def _generate_query_embedding(self, query: str) -> List[float]:
         """
         Generate embedding for the query to use in vector search
-        In a real implementation, this would call the embedding API
-        For now, we'll return a placeholder
         """
-        # Placeholder implementation
-        # In a real implementation, this would call the embedding API
-        # For example, using the google-generativeai library similar to what we have in embedding_generator.py
-        import random
-        # GEMINI embeddings have specific dimensions, but for this placeholder we'll return a random vector
-        # This should be replaced with actual embedding generation
-        return [random.random() for _ in range(768)]  # Assuming 768-dimensional embeddings
+        try:
+            generator = GeminiEmbeddingGenerator()
+            embedding = await generator.generate_embedding(query)
+            if embedding:
+                return embedding
+            
+            # Fallback to random if failed, but log it
+            print(f"Warning: Failed to generate real embedding for query '{query[:30]}...', using random fallback")
+            import random
+            return [random.random() for _ in range(768)]
+        except Exception as e:
+            print(f"Error generating query embedding: {e}")
+            import random
+            return [random.random() for _ in range(768)]
 
-    def integrate_with_semantic_search(self, query: str, top_k: int = 5, module_filter: Optional[str] = None,
+    async def integrate_with_semantic_search(self, query: str, top_k: int = 5, module_filter: Optional[str] = None,
                                      min_similarity_score: float = 0.3) -> List[Dict[str, Any]]:
         """
         Enhanced method to integrate with the semantic search service using GEMINI embeddings
@@ -258,21 +245,12 @@ class RAGAgentService:
                 filters["module_id"] = module_filter
 
             # Perform semantic search using the dedicated service
-            import asyncio
-            try:
-                loop = asyncio.get_event_loop()
-            except RuntimeError:
-                # If there's no event loop, create a new one
-                import asyncio
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-
-            search_results = loop.run_until_complete(search_service.search(
+            search_results = await search_service.search(
                 query=query,
                 top_k=top_k,
                 filters=filters,
                 min_score=min_similarity_score
-            ))
+            )
 
             # Format results to match the expected structure
             integrated_content = []
@@ -303,7 +281,7 @@ class RAGAgentService:
             # Fallback to the original method
             return self.get_relevant_content(query, top_k, module_filter)
     
-    def generate_response(self, query: str, context: List[Dict[str, Any]],
+    async def generate_response(self, query: str, context: List[Dict[str, Any]],
                          selected_text: Optional[str] = None,
                          module_context: Optional[str] = None,
                          conversation_context: Optional[List[Dict[str, str]]] = None) -> Dict[str, Any]:
@@ -518,7 +496,7 @@ class RAGAgentService:
                     "error": "OpenAI/Gemini client not initialized"
                 }
 
-            response = client.chat.completions.create(
+            response = await client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -536,7 +514,7 @@ class RAGAgentService:
             response_text = self._apply_textbook_terminology(response_text, context)
 
             # Ensure the response meets length requirements (150-300 words)
-            response_text = self._control_response_length(
+            response_text = await self._control_response_length(
                 response_text,
                 system_prompt,
                 query,
@@ -748,7 +726,7 @@ class RAGAgentService:
 
         return updated_response
 
-    def _control_response_length(self, response: str, system_prompt: str, query: str,
+    async def _control_response_length(self, response: str, system_prompt: str, query: str,
                                 min_words: int = 150, max_words: int = 300) -> str:
         """
         Control the response length to meet the requirement of 150-300 words
@@ -783,7 +761,7 @@ class RAGAgentService:
 
             try:
                 # Generate expansion using GEMINI
-                expansion_response = self.client.chat.completions.create(
+                expansion_response = await self.client.chat.completions.create(
                     model=self.model,
                     messages=[
                         {"role": "system", "content": system_prompt},
@@ -826,7 +804,7 @@ class RAGAgentService:
                     f"and citations. Target: {max_words} words."
                 )
 
-                summarization_response = self.client.chat.completions.create(
+                summarization_response = await self.client.chat.completions.create(
                     model=self.model,
                     messages=[
                         {"role": "system", "content": system_prompt},
@@ -1374,7 +1352,7 @@ class RAGAgentService:
         # Keep the most recent exchanges within the window
         return conversation_history[-window_size:]
 
-    def answer_question(self, query: str, session_id: Optional[str] = None,
+    async def answer_question(self, query: str, session_id: Optional[str] = None,
                        module_context: Optional[str] = None,
                        selected_text: Optional[str] = None,
                        include_citations: bool = True,
@@ -1413,7 +1391,7 @@ class RAGAgentService:
                 conversation_context = context_manager.get_recent_context(session_id)
 
             # Use specialized method for text selection queries
-            response_data = self.handle_text_selection_query(
+            response_data = await self.handle_text_selection_query(
                 selected_text=selected_text,
                 question=query,
                 module_context=module_context,
@@ -1433,7 +1411,7 @@ class RAGAgentService:
         expanded_query = resolved_context["expanded_query"]
 
         # Retrieve relevant content based on the (potentially expanded) query
-        relevant_content = self.get_relevant_content(
+        relevant_content = await self.get_relevant_content(
             expanded_query,
             top_k=5,
             module_filter=module_context,
@@ -1462,7 +1440,7 @@ class RAGAgentService:
             conversation_context = self.manage_context_window(conversation_context, context_window_size)
 
         # Generate response using the retrieved context
-        response_data = self.generate_response(
+        response_data = await self.generate_response(
             query,
             relevant_content,
             selected_text=selected_text,
@@ -1473,7 +1451,7 @@ class RAGAgentService:
         # Add cross-module navigation suggestions if requested and not in selected text mode
         if suggest_cross_module_content and module_context and not selected_text:
             logger.info(f"Adding cross-module suggestions for query in module {module_context}")
-            response_data = self._add_cross_module_suggestions(response_data, query, module_context)
+            response_data = await self._add_cross_module_suggestions(response_data, query, module_context)
 
         # Enhance citations and update response if needed
         if include_citations:
@@ -1528,12 +1506,6 @@ class RAGAgentService:
             from .semantic_search import SemanticSearchService
             search_service = SemanticSearchService(self.qdrant_manager.collection_name)
 
-            import asyncio
-            try:
-                loop = asyncio.get_event_loop()
-            except RuntimeError:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
 
             # Get cross-module references
             suggestions = await search_service.get_content_navigation_suggestions(
@@ -1544,7 +1516,7 @@ class RAGAgentService:
             print(f"Error getting cross-module suggestions: {e}")
             return []
 
-    def _add_cross_module_suggestions(self, response_data: Dict[str, Any], query: str, current_module: str) -> Dict[str, Any]:
+    async def _add_cross_module_suggestions(self, response_data: Dict[str, Any], query: str, current_module: str) -> Dict[str, Any]:
         """
         Add cross-module suggestions to the response if relevant
 
@@ -1556,17 +1528,8 @@ class RAGAgentService:
         Returns:
             Enhanced response data with cross-module suggestions
         """
-        import asyncio
         try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
-        try:
-            suggestions = loop.run_until_complete(
-                self._get_cross_module_suggestions(query, current_module)
-            )
+            suggestions = await self._get_cross_module_suggestions(query, current_module)
 
             if suggestions:
                 response_text = response_data["response"]
@@ -1828,7 +1791,7 @@ class RAGAgentService:
                 "was_modified": False
             }
 
-    def handle_text_selection_query(self, selected_text: str, question: str,
+    async def handle_text_selection_query(self, selected_text: str, question: str,
                                    module_context: Optional[str] = None,
                                    conversation_context: Optional[List[Dict[str, str]]] = None) -> Dict[str, Any]:
         """
@@ -1927,7 +1890,7 @@ class RAGAgentService:
 
         try:
             # Generate response using GEMINI via OpenAI-compatible API
-            response = self.client.chat.completions.create(
+            response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -1944,7 +1907,7 @@ class RAGAgentService:
             response_text = self._apply_textbook_terminology(response_text, all_context)
 
             # Ensure the response meets length requirements (150-300 words)
-            response_text = self._control_response_length(
+            response_text = await self._control_response_length(
                 response_text,
                 system_prompt,
                 question,

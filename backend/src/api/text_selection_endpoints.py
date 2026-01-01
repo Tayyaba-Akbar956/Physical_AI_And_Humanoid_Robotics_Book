@@ -153,7 +153,7 @@ async def query_selected_text(request: TextSelectionRequest):
             raise HTTPException(status_code=500, detail="Failed to store selected text")
         
         # Process the query about the selected text
-        result = get_text_selection_service().process_text_selection_query(
+        result = await get_text_selection_service().process_text_selection_query(
             session_id=session_id,
             selected_text_id=UUID(stored_text["id"]),
             question=request.question,
@@ -193,7 +193,7 @@ async def query_selected_text(request: TextSelectionRequest):
             response_id=str(uuid4()),
             message=result.get("response", "I couldn't process your query about the selected text. Please try again."),
             citations=result.get("citations", []),
-            timestamp=asyncio.get_event_loop().time() if hasattr(asyncio.get_event_loop(), 'time') else str(""),
+            timestamp=str(datetime.now().timestamp()),
             validation_result={"processed": True}
         )
         
@@ -216,7 +216,7 @@ async def text_selection_health_check():
     return {
         "status": "healthy",
         "service": "text-selection",
-        "timestamp": str(asyncio.get_event_loop().time() if hasattr(asyncio.get_event_loop(), 'time') else "")
+        "timestamp": str(datetime.now().timestamp())
     }
 
 
@@ -294,9 +294,7 @@ async def text_selection_websocket_endpoint(websocket: WebSocket, session_id: st
                     continue
                 
                 # Process the text selection query
-                # For this implementation, we'll call the synchronous method
-                # In a real implementation, you'd likely want asynchronous processing
-                result = get_text_selection_service().process_text_selection_query(
+                result = await get_text_selection_service().process_text_selection_query(
                     session_id=UUID(session_id),
                     selected_text_id=None,  # We'll let the service handle storing
                     question=question,
@@ -310,7 +308,7 @@ async def text_selection_websocket_endpoint(websocket: WebSocket, session_id: st
                     "session_id": session_id,
                     "message": result.get("response", "I couldn't process your text selection query"),
                     "citations": result.get("citations", []),
-                    "timestamp": str(asyncio.get_event_loop().time() if hasattr(asyncio.get_event_loop(), 'time') else ""),
+                    "timestamp": str(datetime.now().timestamp()),
                     "validation_result": validation
                 }
                 

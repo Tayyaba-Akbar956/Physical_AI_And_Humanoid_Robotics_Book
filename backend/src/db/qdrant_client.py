@@ -1,6 +1,6 @@
 import os
 from typing import List, Optional, Dict, Any
-from qdrant_client import QdrantClient
+from qdrant_client import AsyncQdrantClient
 from qdrant_client.http import models
 from qdrant_client.http.models import PointStruct, Distance, VectorParams
 from dotenv import load_dotenv
@@ -31,26 +31,29 @@ class QdrantManager:
         self.collection_name = collection_name
         
         # Initialize Qdrant client
-        self.client = QdrantClient(
-            url=QDRANT_URL or "http://localhost:6333",
-            api_key=QDRANT_API_KEY or "dummy",
-            prefer_grpc=False
-        )
+        self._client = None
+
+    @property
+    def client(self):
+        if self._client is None:
+            self._client = AsyncQdrantClient(
+                url=QDRANT_URL or "http://localhost:6333",
+                api_key=QDRANT_API_KEY or "dummy",
+                prefer_grpc=False
+            )
+        return self._client
         
         # We'll created the collection only if we have proper credentials
-        if QDRANT_URL and QDRANT_API_KEY:
-            try:
-                self._create_collection_if_not_exists()
-            except Exception as e:
-                print(f"Warning: Could not check/create Qdrant collection: {e}")
+        # (This is now handled by the lazy client or external setup)
+        pass
     
-    def _create_collection_if_not_exists(self):
+    async def _create_collection_if_not_exists(self):
         """
         Create the collection if it doesn't already exist
         """
         try:
             # Check if collection exists
-            self.client.get_collection(self.collection_name)
+            await self.client.get_collection(self.collection_name)
             print(f"Collection '{self.collection_name}' already exists")
         except:
             # Collection doesn't exist, create it
@@ -61,15 +64,15 @@ class QdrantManager:
             # In practice, you would determine this based on the specific GEMINI model used
             vector_size = 768  # Placeholder - this should match your actual embedding dimension
             
-            if self.client.collection_exists(collection_name=self.collection_name):
-                self.client.delete_collection(collection_name=self.collection_name)
-            self.client.create_collection(
+            if await self.client.collection_exists(collection_name=self.collection_name):
+                await self.client.delete_collection(collection_name=self.collection_name)
+            await self.client.create_collection(
                 collection_name=self.collection_name,
                 vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
             )
             print(f"Collection '{self.collection_name}' created successfully")
     
-    def add_embeddings(self, points: List[Dict[str, Any]]) -> bool:
+    async def add_embeddings(self, points: List[Dict[str, Any]]) -> bool:
         """
         Add embeddings to the collection
         Each point should have: id, vector, payload
@@ -87,7 +90,7 @@ class QdrantManager:
                 )
             
             # Upload points to Qdrant
-            self.client.upsert(
+            await self.client.upsert(
                 collection_name=self.collection_name,
                 points=qdrant_points
             )
@@ -97,7 +100,7 @@ class QdrantManager:
             print(f"Error adding embeddings to Qdrant: {e}")
             return False
     
-    def search_similar(self, query_vector: List[float], top_k: int = 5, 
+    async def search_similar(self, query_vector: List[float], top_k: int = 5, 
                       filters: Optional[Dict] = None) -> List[Dict[str, Any]]:
         """
         Search for similar embeddings in the collection
@@ -121,7 +124,7 @@ class QdrantManager:
                     )
             
             # Perform search
-            search_results = self.client.search(
+            search_results = await self.client.search(
                 collection_name=self.collection_name,
                 query_vector=query_vector,
                 limit=top_k,
@@ -142,12 +145,12 @@ class QdrantManager:
             print(f"Error searching in Qdrant: {e}")
             return []
     
-    def get_embedding_by_id(self, embedding_id: str) -> Optional[Dict[str, Any]]:
+    async def get_embedding_by_id(self, embedding_id: str) -> Optional[Dict[str, Any]]:
         """
         Retrieve a specific embedding by its ID
         """
         try:
-            records = self.client.retrieve(
+            records = await self.client.retrieve(
                 collection_name=self.collection_name,
                 ids=[embedding_id]
             )
@@ -164,12 +167,12 @@ class QdrantManager:
             print(f"Error retrieving embedding from Qdrant: {e}")
             return None
     
-    def delete_embedding(self, embedding_id: str) -> bool:
+    async def delete_embedding(self, embedding_id: str) -> bool:
         """
         Delete an embedding by its ID
         """
         try:
-            self.client.delete(
+            await self.client.delete(
                 collection_name=self.collection_name,
                 points_selector=[embedding_id]
             )
@@ -178,12 +181,12 @@ class QdrantManager:
             print(f"Error deleting embedding from Qdrant: {e}")
             return False
     
-    def get_collection_info(self):
+    async def get_collection_info(self):
         """
         Get information about the collection
         """
         try:
-            collection_info = self.client.get_collection(self.collection_name)
+            collection_info = await self.client.get_collection(self.collection_name)
             return {
                 "collection_name": collection_info.config.params.vectors_count,
                 "vector_size": collection_info.config.params.vector_size,

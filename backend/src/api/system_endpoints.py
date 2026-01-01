@@ -36,7 +36,7 @@ async def system_health_check() -> Dict[str, Any]:
     try:
         qdrant_client = QdrantManager()
         # Test basic connection
-        collection_info = qdrant_client.get_collection_info()
+        collection_info = await qdrant_client.get_collection_info()
     except Exception as e:
         qdrant_ok = False
 
@@ -94,13 +94,14 @@ async def dependency_health_check() -> Dict[str, Any]:
             }
 
         # Try to create a client and make a simple request
-        client = OpenAI(
+        from openai import AsyncOpenAI
+        client = AsyncOpenAI(
             api_key=gemini_api_key,
             base_url="https://generativelanguage.googleapis.com/v1beta/openai/",  # GEMINI OpenAI-compatible endpoint
         )
 
         # Test API connectivity with a minimal request
-        test_response = client.chat.completions.create(
+        test_response = await client.chat.completions.create(
             model="gemini-2.0-flash",
             messages=[{"role": "user", "content": "test"}],
             max_tokens=5

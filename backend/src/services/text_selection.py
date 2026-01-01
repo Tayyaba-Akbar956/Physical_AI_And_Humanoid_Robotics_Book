@@ -133,7 +133,7 @@ class TextSelectionService:
         finally:
             db.close()
     
-    def process_text_selection_query(self, session_id: UUID, selected_text_id: UUID,
+    async def process_text_selection_query(self, session_id: UUID, selected_text_id: UUID,
                                    question: str, module_context: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """
         Process a query about selected text
@@ -163,7 +163,7 @@ class TextSelectionService:
 
             # Use the RAG agent to generate a response based on the selected text
             # We'll pass the selected text as additional context
-            result = self.rag_agent.answer_question(
+            result = await self.rag_agent.answer_question(
                 query=enhanced_query,
                 session_id=str(session_id),
                 module_context=module_context,
@@ -270,7 +270,7 @@ class TextSelectionService:
             # On error, return the original explanation
             return explanation
 
-    def get_relevant_content_around_selection(self, selected_text: str,
+    async def get_relevant_content_around_selection(self, selected_text: str,
                                             top_k: int = 3) -> List[Dict[str, Any]]:
         """
         Find content that's contextually related to the selected text
@@ -290,7 +290,7 @@ class TextSelectionService:
             search_service = SemanticSearchService()
 
             # Search for content related to the selected text in the textbook
-            results = search_service.search(
+            results = await search_service.search(
                 query=selected_text,
                 top_k=top_k,
                 min_score=0.5  # Minimum relevance threshold

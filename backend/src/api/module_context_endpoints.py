@@ -132,12 +132,6 @@ async def get_module_relevance(request: ModuleRelevanceRequest):
         # Use semantic search service to calculate relevance
         search_service = SemanticSearchService()
         
-        import asyncio
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
         
         relevance_scores = await search_service.get_module_content_relevance(
             query=request.query,
@@ -164,12 +158,6 @@ async def get_module_content_suggestions(module_id: str, query: str):
     try:
         search_service = SemanticSearchService()
         
-        import asyncio
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
         
         results = await search_service.search_in_module(
             query=query,

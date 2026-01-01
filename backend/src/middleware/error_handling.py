@@ -22,7 +22,7 @@ class ErrorHandlingMiddleware:
             return
 
         try:
-            # Process the request - JUST AWAIT, DON'T RETURN
+            # Process the request
             await self.app(scope, receive, send)
             
         except HTTPException as e:
@@ -33,6 +33,56 @@ class ErrorHandlingMiddleware:
             # Handle general exceptions
             request = Request(scope)
             await self.handle_general_exception(scope, receive, send, e, request)
+
+    async def handle_http_exception(self, scope, receive, send, e: HTTPException):
+        """
+        Handle HTTP exceptions by returning a JSON response
+        """
+        status_code = e.status_code
+        detail = e.detail
+        
+        response_content = {
+            "error": {
+                "type": "HTTPException",
+                "message": detail,
+                "status_code": status_code,
+                "timestamp": datetime.now(UTC).isoformat()
+            }
+        }
+        
+        response = JSONResponse(
+            status_code=status_code,
+            content=response_content
+        )
+        await response(scope, receive, send)
+
+    async def handle_general_exception(self, scope, receive, send, e: Exception, request: Request):
+        """
+        Handle general exceptions by logging them and returning a 500 JSON response
+        """
+        error_id = datetime.now(UTC).strftime("%Y%m%d%H%M%S")
+        error_type = type(e).__name__
+        message = str(e)
+        
+        # Log the error with traceback
+        logger = logging.getLogger("rag_chatbot")
+        logger.error(f"Unhandled Exception: {error_type}: {message}\n{traceback.format_exc()}")
+        
+        response_content = {
+            "error": {
+                "type": "InternalServerError",
+                "message": "An unexpected error occurred. Please try again later.",
+                "error_id": error_id,
+                "detail": message if os.getenv("DEBUG") == "True" else None,
+                "timestamp": datetime.now(UTC).isoformat()
+            }
+        }
+        
+        response = JSONResponse(
+            status_code=status_code if 'status_code' in locals() else 500,
+            content=response_content
+        )
+        await response(scope, receive, send)
 
 
 def add_security_headers(app):
