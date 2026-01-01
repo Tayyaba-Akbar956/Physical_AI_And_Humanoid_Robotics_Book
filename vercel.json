@@ -20,7 +20,7 @@
     },
     {
       "src": "/frontend/(.*)",
-      "dest": "/frontend/$1"
+      "dest": "/build/frontend/$1"
     },
     {
       "src": "/(.+)",
