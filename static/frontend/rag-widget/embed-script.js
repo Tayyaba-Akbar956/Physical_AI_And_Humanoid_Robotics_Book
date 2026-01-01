@@ -94,10 +94,11 @@
         container.id = CONFIG.containerId;
         container.style.cssText = `
             position: fixed;
-            bottom: 90px;
+            bottom: 80px;
             right: 20px;
             width: 380px;
-            height: 600px;
+            height: min(600px, 75vh);
+            max-height: calc(100vh - 110px);
             z-index: 10000;
             box-shadow: 0 8px 24px rgba(0,0,0,0.2);
             border-radius: 12px;
@@ -107,6 +108,7 @@
             background: white;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             border: 1px solid #eee;
+            transition: all 0.3s ease;
         `;
 
         const header = document.createElement('div');
@@ -146,6 +148,20 @@
             if (e.key === 'Enter') sendMessage();
         });
 
+        // Add CSS for mobile responsiveness
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @media (max-width: 480px) {
+                #${CONFIG.containerId} {
+                    width: calc(100% - 40px) !important;
+                    right: 20px !important;
+                    bottom: 80px !important;
+                    height: calc(100vh - 120px) !important;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
         return container;
     }
 
@@ -169,13 +185,25 @@
                 })
             });
 
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || `Server error: ${response.status}`);
+            }
+
             const data = await response.json();
             if (data.session_id) window.ragChatbotSessionId = data.session_id;
             addMessageToChat('bot', data.message);
         } catch (error) {
             console.error('Error sending message:', error);
-            addMessageToChat('bot', 'Sorry, I encountered an error. Please check your connection or try again.');
+            let userError = 'Sorry, I encountered an error.';
+            if (error.message.includes('HTTP error') || error.message.includes('Server error')) {
+                userError += ` (Detail: ${error.message})`;
+            } else if (error.name === 'TypeError') {
+                userError += ' (Network error: Check your connection)';
+            } else {
+                userError += ` (${error.message})`;
+            }
+            addMessageToChat('bot', userError);
         }
     }
 
