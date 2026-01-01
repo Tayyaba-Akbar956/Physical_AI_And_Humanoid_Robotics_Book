@@ -17,5 +17,9 @@ from src.main import app
 # Restore the original working directory
 os.chdir(original_cwd)
 
+# Import Mangum for Vercel serverless deployment
+from mangum import Mangum
+
 # This file serves as the entry point for Vercel's Python runtime
-# Vercel will look for a top-level app object to handle requests
+# Vercel will look for a top-level app or handler object to handle requests
+handler = Mangum(app)
