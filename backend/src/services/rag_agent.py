@@ -35,12 +35,22 @@ class RAGAgentService:
         """Lazy initialization of the OpenAI client"""
         if self._client is None:
             if not GEMINI_API_KEY:
-                raise ValueError("GEMINI_API_KEY is not set in environment variables")
+                # Log warning but don't crash startup
+                import logging
+                logger = logging.getLogger("rag_chatbot")
+                logger.warning("GEMINI_API_KEY is not set in environment variables. Client will be None.")
+                return None
             
-            self._client = OpenAI(
-                api_key=GEMINI_API_KEY,
-                base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
-            )
+            try:
+                self._client = OpenAI(
+                    api_key=GEMINI_API_KEY,
+                    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+                )
+            except Exception as e:
+                import logging
+                logger = logging.getLogger("rag_chatbot")
+                logger.error(f"Failed to initialize OpenAI client: {e}")
+                return None
         return self._client
         
     def get_relevant_content(self, query: str, top_k: int = 5, module_filter: Optional[str] = None,
@@ -500,7 +510,15 @@ class RAGAgentService:
                 """
 
             # Generate response using GEMINI via OpenAI-compatible API
-            response = self.client.chat.completions.create(
+            client = self.client
+            if not client:
+                return {
+                    "response": "I'm sorry, but I'm unable to connect to the AI service (GEMINI_API_KEY may be missing or invalid). Please check the backend configuration.",
+                    "citations": [],
+                    "error": "OpenAI/Gemini client not initialized"
+                }
+
+            response = client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -765,7 +783,7 @@ class RAGAgentService:
 
             try:
                 # Generate expansion using GEMINI
-                expansion_response = client.chat.completions.create(
+                expansion_response = self.client.chat.completions.create(
                     model=self.model,
                     messages=[
                         {"role": "system", "content": system_prompt},
@@ -808,7 +826,7 @@ class RAGAgentService:
                     f"and citations. Target: {max_words} words."
                 )
 
-                summarization_response = client.chat.completions.create(
+                summarization_response = self.client.chat.completions.create(
                     model=self.model,
                     messages=[
                         {"role": "system", "content": system_prompt},
@@ -1909,7 +1927,7 @@ class RAGAgentService:
 
         try:
             # Generate response using GEMINI via OpenAI-compatible API
-            response = client.chat.completions.create(
+            response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},

@@ -12,11 +12,23 @@ load_dotenv()
 # Get GEMINI API key from environment
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-if not GEMINI_API_KEY:
-    raise ValueError("GEMINI_API_KEY is not set in environment variables")
+def configure_genai():
+    """
+    Lazily configure the GEMINI client
+    """
+    if not GEMINI_API_KEY:
+        print("Warning: GEMINI_API_KEY is not set. Google GenAI will not be configured.")
+        return False
+    
+    try:
+        genai.configure(api_key=GEMINI_API_KEY)
+        return True
+    except Exception as e:
+        print(f"Error configuring Google GenAI: {e}")
+        return False
 
-# Initialize the GEMINI client
-genai.configure(api_key=GEMINI_API_KEY)
+# Initialize the GEMINI client flag
+_genai_configured = False
 
 
 class GeminiEmbeddingGenerator:
@@ -32,20 +44,33 @@ class GeminiEmbeddingGenerator:
             model_name: The name of the GEMINI embedding model to use
         """
         self.model_name = model_name
-        self.embedding_model = genai.EmbeddingModel(model_name)
+        self._embedding_model = None
+    
+    @property
+    def embedding_model(self):
+        """
+        Lazily initialize the embedding model
+        """
+        if self._embedding_model is None:
+            global _genai_configured
+            if not _genai_configured:
+                _genai_configured = configure_genai()
+            
+            if _genai_configured:
+                self._embedding_model = genai.EmbeddingModel(self.model_name)
+        return self._embedding_model
     
     async def generate_embedding(self, text: str) -> Optional[List[float]]:
         """
         Generate embedding for a single text
-        
-        Args:
-            text: The text to generate embedding for
-            
-        Returns:
-            A list of floats representing the embedding vector
         """
+        model = self.embedding_model
+        if not model:
+            print("Error: Embedding model not configured. Check GEMINI_API_KEY.")
+            return None
+            
         try:
-            response = await self.embedding_model.embed_content(text)
+            response = await model.embed_content(text)
             return response.embedding
         except Exception as e:
             print(f"Error generating embedding for text: {e}")

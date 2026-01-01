@@ -26,8 +26,18 @@ class SemanticSearchService:
         self.qdrant_manager = QdrantManager(collection_name)
         self.collection_name = collection_name
         # We'll use the same embedding dimensions as in the embedding generator
-        self.embedding_generator = None  # Will initialize when needed to avoid circular imports
-        self.rag_agent_service = RAGAgentService(collection_name)
+        self.embedding_generator = None  # Will initialize when needed
+        self._rag_agent_service = None
+    
+    @property
+    def rag_agent_service(self):
+        """
+        Lazy initialization of RAG agent service to avoid circular imports
+        """
+        if self._rag_agent_service is None:
+            from .rag_agent import RAGAgentService
+            self._rag_agent_service = RAGAgentService(self.collection_name)
+        return self._rag_agent_service
     
     def _get_embedding_generator(self):
         """
