@@ -14,13 +14,6 @@ load_dotenv()
 QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 
-if not QDRANT_URL:
-    raise ValueError("QDRANT_URL is not set in environment variables")
-
-if not QDRANT_API_KEY:
-    raise ValueError("QDRANT_API_KEY is not set in environment variables")
-
-
 class QdrantManager:
     """
     Manager class for handling Qdrant vector database operations
@@ -30,17 +23,26 @@ class QdrantManager:
         """
         Initialize the Qdrant client and collection
         """
+        if not QDRANT_URL:
+            print("Warning: QDRANT_URL is not set")
+        if not QDRANT_API_KEY:
+            print("Warning: QDRANT_API_KEY is not set")
+            
         self.collection_name = collection_name
         
         # Initialize Qdrant client
         self.client = QdrantClient(
-            url=QDRANT_URL,
-            api_key=QDRANT_API_KEY,
-            prefer_grpc=False  # Set to True for better performance if gRPC is available
+            url=QDRANT_URL or "http://localhost:6333",
+            api_key=QDRANT_API_KEY or "dummy",
+            prefer_grpc=False
         )
         
-        # Create collection if it doesn't exist
-        self._create_collection_if_not_exists()
+        # We'll created the collection only if we have proper credentials
+        if QDRANT_URL and QDRANT_API_KEY:
+            try:
+                self._create_collection_if_not_exists()
+            except Exception as e:
+                print(f"Warning: Could not check/create Qdrant collection: {e}")
     
     def _create_collection_if_not_exists(self):
         """
@@ -192,16 +194,17 @@ class QdrantManager:
             return None
 
 
-# Global instance of QdrantManager
-# In a real application, you might want to handle this differently based on your architecture
-qdrant_manager = QdrantManager()
-
+# Global instance of QdrantManager (initially None)
+_qdrant_manager_instance = None
 
 def get_qdrant_manager() -> QdrantManager:
     """
-    Get the global QdrantManager instance
+    Get (and initialize if needed) the global QdrantManager instance
     """
-    return qdrant_manager
+    global _qdrant_manager_instance
+    if _qdrant_manager_instance is None:
+        _qdrant_manager_instance = QdrantManager()
+    return _qdrant_manager_instance
 
 
 if __name__ == "__main__":

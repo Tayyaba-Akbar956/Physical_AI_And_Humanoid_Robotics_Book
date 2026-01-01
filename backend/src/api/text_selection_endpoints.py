@@ -18,10 +18,28 @@ from ..services.text_selection import TextSelectionService
 from ..db.connection import get_db
 
 
-# Initialize services
-rag_agent_service = RAGAgentService()
-session_manager_service = SessionManagementService()
-text_selection_service = TextSelectionService()
+# Global service instances (initially None)
+_rag_agent_instance = None
+_session_manager_instance = None
+_text_selection_instance = None
+
+def get_rag_agent_service() -> RAGAgentService:
+    global _rag_agent_instance
+    if _rag_agent_instance is None:
+        _rag_agent_instance = RAGAgentService()
+    return _rag_agent_instance
+
+def get_session_manager_service() -> SessionManagementService:
+    global _session_manager_instance
+    if _session_manager_instance is None:
+        _session_manager_instance = SessionManagementService()
+    return _session_manager_instance
+
+def get_text_selection_service() -> TextSelectionService:
+    global _text_selection_instance
+    if _text_selection_instance is None:
+        _text_selection_instance = TextSelectionService()
+    return _text_selection_instance
 
 # Create API router
 router = APIRouter(prefix="/api/text-selection", tags=["text-selection"])
@@ -91,7 +109,7 @@ async def detect_text_selection(request: TextSelectionRequest):
             )
 
         # Validate the selected text using the service
-        validation = text_selection_service.validate_selected_text(request.selected_text)
+        validation = get_text_selection_service().validate_selected_text(request.selected_text)
 
         return TextSelectionValidationResponse(
             validation_result="valid" if validation["is_valid"] else "invalid",
@@ -116,14 +134,14 @@ async def query_selected_text(request: TextSelectionRequest):
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid session ID format")
         
-        session_info = session_manager_service.get_session(session_id)
+        session_info = get_session_manager_service().get_session(session_id)
         if not session_info:
             raise HTTPException(status_code=404, detail="Session not found")
         if not session_info["is_active"]:
             raise HTTPException(status_code=400, detail="Session is not active")
         
         # Store the selected text
-        stored_text = text_selection_service.store_selected_text(
+        stored_text = get_text_selection_service().store_selected_text(
             content=request.selected_text,
             module_id=request.module_id,
             chapter_id=request.chapter_id,
@@ -135,7 +153,7 @@ async def query_selected_text(request: TextSelectionRequest):
             raise HTTPException(status_code=500, detail="Failed to store selected text")
         
         # Process the query about the selected text
-        result = text_selection_service.process_text_selection_query(
+        result = get_text_selection_service().process_text_selection_query(
             session_id=session_id,
             selected_text_id=UUID(stored_text["id"]),
             question=request.question,
@@ -146,7 +164,7 @@ async def query_selected_text(request: TextSelectionRequest):
             raise HTTPException(status_code=500, detail="Failed to process text selection query")
         
         # Add the selected text query to the session history
-        user_message = session_manager_service.add_message_to_session(
+        user_message = get_session_manager_service().add_message_to_session(
             session_id=session_id,
             sender_type="student",
             content=f"Regarding selected text: '{request.selected_text[:100]}...', I ask: {request.question}",
@@ -158,7 +176,7 @@ async def query_selected_text(request: TextSelectionRequest):
         
         # Add AI response to session
         if "response" in result:
-            ai_message = session_manager_service.add_message_to_session(
+            ai_message = get_session_manager_service().add_message_to_session(
                 session_id=session_id,
                 sender_type="ai_agent",
                 content=result["response"],
@@ -263,7 +281,7 @@ async def text_selection_websocket_endpoint(websocket: WebSocket, session_id: st
             
             if message_type == "text_selection":
                 # Validate selected text
-                validation = text_selection_service.validate_selected_text(selected_text)
+                validation = get_text_selection_service().validate_selected_text(selected_text)
                 
                 if not validation["can_ask_query"]:
                     await selection_manager.send_personal_message(
@@ -278,7 +296,7 @@ async def text_selection_websocket_endpoint(websocket: WebSocket, session_id: st
                 # Process the text selection query
                 # For this implementation, we'll call the synchronous method
                 # In a real implementation, you'd likely want asynchronous processing
-                result = text_selection_service.process_text_selection_query(
+                result = get_text_selection_service().process_text_selection_query(
                     session_id=UUID(session_id),
                     selected_text_id=None,  # We'll let the service handle storing
                     question=question,

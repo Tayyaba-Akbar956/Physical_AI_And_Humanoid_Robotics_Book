@@ -11,16 +11,17 @@ load_dotenv()
 # Get database URL from environment
 DATABASE_URL = os.getenv("NEON_DB_URL")
 
-if not DATABASE_URL:
-    raise ValueError("NEON_DB_URL is not set in environment variables")
-
-
-# Create the SQLAlchemy engine
-engine = create_engine(
-    DATABASE_URL,
-    pool_pre_ping=True,  # Verify connections before using them
-    echo=False  # Set to True for SQL query logging
-)
+# Create the SQLAlchemy engine (handle missing URL gracefully during initialization)
+if DATABASE_URL:
+    engine = create_engine(
+        DATABASE_URL,
+        pool_pre_ping=True,  # Verify connections before using them
+        echo=False
+    )
+else:
+    print("Warning: NEON_DB_URL is not set. Engine will not be initialized.")
+    # Create a dummy engine or handle in get_db
+    engine = None
 
 # Create a SessionLocal class to handle database sessions
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

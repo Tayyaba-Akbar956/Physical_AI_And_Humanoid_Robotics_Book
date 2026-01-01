@@ -90,9 +90,21 @@ def monitor_performance(func: Callable) -> Callable:
     return wrapper
 
 
-# Initialize services
-rag_agent_service = RAGAgentService()
-session_manager_service = SessionManagementService()
+# Global service instances (initially None)
+_rag_agent_instance = None
+_session_manager_instance = None
+
+def get_rag_agent_service() -> RAGAgentService:
+    global _rag_agent_instance
+    if _rag_agent_instance is None:
+        _rag_agent_instance = RAGAgentService()
+    return _rag_agent_instance
+
+def get_session_manager_service() -> SessionManagementService:
+    global _session_manager_instance
+    if _session_manager_instance is None:
+        _session_manager_instance = SessionManagementService()
+    return _session_manager_instance
 
 # Create API router
 router = APIRouter(prefix="/api/chat", tags=["chat"])
@@ -161,7 +173,7 @@ async def chat_query(request: ChatQueryRequest):
                 raise HTTPException(status_code=400, detail="Invalid session ID format")
 
             # Verify session exists and is active
-            session_info = session_manager_service.get_session(session_id)
+            session_info = get_session_manager_service().get_session(session_id)
             if not session_info:
                 raise HTTPException(status_code=404, detail="Session not found")
             if not session_info["is_active"]:
@@ -170,7 +182,7 @@ async def chat_query(request: ChatQueryRequest):
             # Create a new session (for this example, using a temporary student ID)
             # In a real application, you would have proper authentication
             temp_student_id = uuid4()  # This would come from authentication
-            session_info = session_manager_service.create_session(
+            session_info = get_session_manager_service().create_session(
                 student_id=temp_student_id,
                 current_module_context=request.module_context
             )
@@ -183,7 +195,7 @@ async def chat_query(request: ChatQueryRequest):
         # Update session with current module context if provided
         if request.module_context:
             from ..models.chat_session import ChatSessionUpdate
-            update_result = session_manager_service.update_session(
+            update_result = get_session_manager_service().update_session(
                 session_id,
                 ChatSessionUpdate(current_module_context=request.module_context)
             )
@@ -214,7 +226,7 @@ async def chat_query(request: ChatQueryRequest):
         current_topic = topic_info["current_topic"]
 
         # Add user message to session with conversation context
-        user_message = session_manager_service.add_message_to_session(
+        user_message = get_session_manager_service().add_message_to_session(
             session_id=session_id,
             sender_type="student",
             content=request.message,
@@ -225,7 +237,7 @@ async def chat_query(request: ChatQueryRequest):
             raise HTTPException(status_code=500, detail="Failed to store user message")
 
         # Get response from RAG agent with enhanced conversation context
-        response_data = rag_agent_service.answer_question(
+        response_data = get_rag_agent_service().answer_question(
             query=actual_query,
             session_id=str(session_id),
             module_context=request.module_context,
@@ -243,7 +255,7 @@ async def chat_query(request: ChatQueryRequest):
             citations = response_data.get("citations", [])
 
         # Add AI response to session with conversation context
-        ai_message = session_manager_service.add_message_to_session(
+        ai_message = get_session_manager_service().add_message_to_session(
             session_id=session_id,
             sender_type="ai_agent",
             content=response_text,

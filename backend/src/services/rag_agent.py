@@ -12,18 +12,8 @@ import logging
 # Load environment variables
 load_dotenv()
 
-# Initialize GEMINI via OpenAI-compatible API
+# Configuration
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
-if not GEMINI_API_KEY:
-    raise ValueError("GEMINI_API_KEY is not set in environment variables")
-
-# Initialize OpenAI client with GEMINI API
-client = OpenAI(
-    api_key=GEMINI_API_KEY,
-    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",  # GEMINI OpenAI-compatible endpoint
-)
-
 
 class RAGAgentService:
     """
@@ -34,12 +24,24 @@ class RAGAgentService:
     def __init__(self, collection_name: str = "textbook_content_embeddings"):
         """
         Initialize the RAG Agent Service
-        
-        Args:
-            collection_name: The name of the Qdrant collection to search
         """
-        self.qdrant_manager = QdrantManager(collection_name)
-        self.model = "gemini-2.0-flash"  # Using GEMINI 2.0 flash model
+        from ..db.qdrant_client import get_qdrant_manager
+        self.qdrant_manager = get_qdrant_manager()
+        self.model = "gemini-2.0-flash"
+        self._client = None
+
+    @property
+    def client(self):
+        """Lazy initialization of the OpenAI client"""
+        if self._client is None:
+            if not GEMINI_API_KEY:
+                raise ValueError("GEMINI_API_KEY is not set in environment variables")
+            
+            self._client = OpenAI(
+                api_key=GEMINI_API_KEY,
+                base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+            )
+        return self._client
         
     def get_relevant_content(self, query: str, top_k: int = 5, module_filter: Optional[str] = None,
                             prioritize_current_module: bool = True) -> List[Dict[str, Any]]:
@@ -498,7 +500,7 @@ class RAGAgentService:
                 """
 
             # Generate response using GEMINI via OpenAI-compatible API
-            response = client.chat.completions.create(
+            response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
