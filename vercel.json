@@ -7,20 +7,12 @@
       "config": {
         "distDir": "build"
       }
-    },
-    {
-      "src": "backend/api.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "15mb"
-      }
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": "/backend/api.py"
+      "src": "/(.*)",
+      "dest": "/$1"
     }
-  ],
-  "outputDirectory": "build"
+  ]
 }

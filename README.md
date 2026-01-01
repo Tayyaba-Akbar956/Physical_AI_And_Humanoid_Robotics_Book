@@ -2,6 +2,10 @@
 
 An intelligent chatbot that helps students with the Physical AI & Humanoid Robotics textbook using Retrieval-Augmented Generation.
 
+## Deployment
+
+For detailed instructions on how to deploy this project (Frontend on Vercel, Backend on Render), please see the [Deployment Guide](DEPLOYMENT.md).
+
 ## Features
 
 - **Conversational Context**: Maintains multi-turn conversations with context awareness

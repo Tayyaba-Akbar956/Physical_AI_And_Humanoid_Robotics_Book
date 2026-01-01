@@ -1,182 +1,79 @@
-# Deployment Guide for Physical AI & Humanoid Robotics Textbook with RAG Chatbot
+# Deployment Guide: Split Hosting (Vercel + Render)
 
-## Overview
-This guide provides instructions for deploying the RAG Chatbot application for the Physical AI & Humanoid Robotics Textbook.
+This project uses a split deployment strategy:
+- **Frontend**: Docusaurus site on **Vercel**.
+- **Backend**: FastAPI RAG Chatbot on **Render**.
 
-## Prerequisites
+---
 
-### System Requirements
-- Python 3.11+
-- Node.js 18+ (for frontend)
-- Git
-- Access to external services (GEMINI, Qdrant, NeonDB)
+## 1. Backend Deployment (Render)
 
-### External Services Required
-1. **GEMINI API Key**: For AI model access
-2. **Qdrant Vector Database**: For semantic search
-3. **NeonDB (PostgreSQL)**: For structured data storage
+### Prerequisites
+- Create a [Render](https://render.com/) account.
+- Connect your GitHub repository.
 
-## Environment Configuration
+### Steps
+1. Click **New +** and select **Web Service**.
+2. Connect your repository.
+3. Configure the service:
+   - **Name**: `physical-ai-backend` (or your choice)
+   - **Root Directory**: `backend`
+   - **Runtime**: `Python 3`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn api:app --host 0.0.0.0 --port $PORT`
+4. Add **Environment Variables**:
+   - `GEMINI_API_KEY`: Your Google Gemini API key.
+   - `QDRANT_URL`: URL of your Qdrant instance.
+   - `QDRANT_API_KEY`: API key for Qdrant.
+   - `NEON_DB_URL`: PostgreSQL connection string (Neon DB).
+   - `ALLOWED_ORIGINS`: `https://your-vercel-domain.vercel.app`
+   - `PORT`: 8000 (Render sets this automatically).
 
-### 1. Create Environment File
-Copy the example environment file and fill in your credentials:
+---
 
-```bash
-cp .env.example .env
-```
+## 2. Frontend Deployment (Vercel)
 
-### 2. Update Environment Variables
-Edit the `.env` file with your specific configuration:
+### Prerequisites
+- Create a [Vercel](https://vercel.com/) account.
+- Connect your GitHub repository.
 
-```env
-# GEMINI API Configuration
-GEMINI_API_KEY=your_actual_gemini_api_key_here
+### Steps
+1. Click **Add New** and select **Project**.
+2. Select your repository.
+3. Vercel will auto-detect Docusaurus. Ensure the settings are:
+   - **Build Command**: `npm run build` (or `docusaurus build`)
+   - **Output Directory**: `build`
+4. Add **Environment Variables**:
+   - `REACT_APP_API_URL`: `https://your-render-service.onrender.com`
 
-# Qdrant Vector Database Configuration
-QDRANT_URL=your_actual_qdrant_url_here
-QDRANT_API_KEY=your_actual_qdrant_api_key_here
+---
 
-# Neon Database Configuration
-NEON_DB_URL=your_actual_neon_db_url_here
+## 3. Post-Deployment Configuration
 
-# Application Configuration
-PORT=8000
-DEBUG=false
-ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
-```
+1. **Update Website Configuration**:
+   - Ensure `docusaurus.config.js` or your meta tags reference the correct Render backend URL.
+   
+2. **CORS Validation**:
+   - Verify that `ALLOWED_ORIGINS` in your Render backend includes your final Vercel domain.
 
-## Backend Deployment
+3. **Verification**:
+   - Visit your Vercel URL.
+   - Open the chatbot and ask a question to verify it can reach the Render backend.
 
-### 1. Install Dependencies
-```bash
-cd backend
-pip install -r requirements.txt
-```
+---
 
-### 2. Run the Application
-```bash
-# For development
-uvicorn src.main:app --reload --port 8000
+## Environment Variables Summary
 
-# For production (using gunicorn)
-gunicorn src.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
-```
+### Backend (Render)
+| Variable | Description |
+| --- | --- |
+| `GEMINI_API_KEY` | API key for RAG generation |
+| `QDRANT_URL` | Vector DB URL |
+| `QDRANT_API_KEY` | Vector DB Key |
+| `NEON_DB_URL` | PostgreSQL URL |
+| `ALLOWED_ORIGINS` | CORS whitelist (Vercel URL) |
 
-## Frontend Integration
-
-### 1. Configure API URL
-The frontend widget can be configured in multiple ways:
-
-#### Option A: Via Script Data Attribute
-```html
-<script src="/frontend/rag-widget/embed-script.js" data-api-url="https://yourdomain.com/api"></script>
-```
-
-#### Option B: Via Meta Tag
-```html
-<meta name="rag-chatbot-api-url" content="https://yourdomain.com/api">
-<script src="/frontend/rag-widget/embed-script.js"></script>
-```
-
-#### Option C: Via Global Configuration
-```html
-<script>
-  window.RAG_CHATBOT_CONFIG = {
-    apiUrl: 'https://yourdomain.com/api'
-  };
-</script>
-<script src="/frontend/rag-widget/embed-script.js"></script>
-```
-
-### 2. Embed the Widget
-Include the following script in your HTML to embed the chatbot:
-
-```html
-<script src="/frontend/rag-widget/embed-script.js"></script>
-```
-
-## Production Configuration
-
-### 1. Security Considerations
-- Update CORS settings in `.env` with your actual domains
-- Set `DEBUG=false` in production
-- Use HTTPS for all API calls
-- Implement proper API rate limiting
-
-### 2. Environment Variables for Production
-```env
-# Production environment
-DEBUG=false
-ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
-PORT=8000
-
-# API keys (do not commit to version control)
-GEMINI_API_KEY=your_production_gemini_api_key
-QDRANT_URL=your_production_qdrant_url
-QDRANT_API_KEY=your_production_qdrant_api_key
-NEON_DB_URL=your_production_neon_db_url
-```
-
-## Testing the Deployment
-
-### 1. Backend Health Check
-Verify the backend is running:
-```bash
-curl http://localhost:8000/health
-```
-
-### 2. API Endpoints
-Test the main API endpoint:
-```bash
-curl http://localhost:8000/
-```
-
-### 3. Frontend Widget
-Visit your website and verify the chatbot widget appears and functions correctly.
-
-## Monitoring and Logging
-
-### 1. Application Logs
-The application logs to standard output. Configure your deployment platform to capture these logs.
-
-### 2. Health Checks
-The application provides health check endpoints:
-- `/health` - Basic health check
-- `/api/system/health` - System health check
-- `/api/system/metrics` - Performance metrics
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Environment Variables Not Set**
-   - Error: "GEMINI_API_KEY is not set in environment variables"
-   - Solution: Ensure `.env` file is properly configured and loaded
-
-2. **CORS Errors**
-   - Error: "Access to fetch at ... from origin ... has been blocked by CORS policy"
-   - Solution: Update `ALLOWED_ORIGINS` in your environment variables
-
-3. **API Connection Issues**
-   - Error: Cannot connect to external services
-   - Solution: Verify API keys and service URLs are correct
-
-### Debugging Tips
-- Set `DEBUG=true` temporarily to get more detailed error messages
-- Check that all required environment variables are properly set
-- Verify external services (GEMINI, Qdrant, NeonDB) are accessible
-
-## Scaling Recommendations
-
-1. **Backend Scaling**
-   - Use multiple workers when running with gunicorn
-   - Implement load balancing for high-traffic scenarios
-   - Monitor resource usage and scale accordingly
-
-2. **Database Scaling**
-   - Monitor Qdrant performance for semantic search
-   - Consider NeonDB scaling options for high usage
-
-3. **Frontend Optimization**
-   - Cache the embed script for better performance
-   - Implement lazy loading for the chatbot widget
+### Frontend (Vercel)
+| Variable | Description |
+| --- | --- |
+| `REACT_APP_API_URL` | The URL of your Render backend |

@@ -1,4 +1,4 @@
-# API entry point for Vercel deployment
+# API entry point for deployment
 import os
 import sys
 from pathlib import Path
@@ -17,9 +17,9 @@ from src.main import app
 # Restore the original working directory
 os.chdir(original_cwd)
 
-# Import Mangum for Vercel serverless deployment
-from mangum import Mangum
-
-# This file serves as the entry point for Vercel's Python runtime
-# Vercel will look for a top-level app or handler object to handle requests
-handler = Mangum(app)
+# Export the app for uvicorn
+# Usage: uvicorn api:app --host 0.0.0.0 --port $PORT
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)

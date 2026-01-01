@@ -17,26 +17,27 @@
     };
 
     // Function to get API URL
-    function getApiUrl() {
-        const script = document.currentScript || document.querySelector('script[src*="embed-script"]');
-        if (script && script.dataset.apiUrl) {
-            return script.dataset.apiUrl.replace(/\/$/, '');
+    const getApiUrl = () => {
+        if (typeof process !== 'undefined' && process.env.REACT_APP_API_URL) {
+            return process.env.REACT_APP_API_URL.replace(/\/$/, '');
         }
-
         const metaTag = document.querySelector('meta[name="rag-chatbot-api-url"]');
         if (metaTag && metaTag.content) {
             return metaTag.content.replace(/\/$/, '');
         }
-
+        const script = document.currentScript || document.querySelector('script[src*="embed-script"]');
+        if (script && script.dataset.apiUrl) {
+            return script.dataset.apiUrl.replace(/\/$/, '');
+        }
         if (window.RAG_CHATBOT_CONFIG && window.RAG_CHATBOT_CONFIG.apiUrl) {
             return window.RAG_CHATBOT_CONFIG.apiUrl.replace(/\/$/, '');
         }
-
-        // Return empty string for same-origin or absolute URL if needed
+        
+        // Default fallback
         return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:8000'
             : '';
-    }
+    };
 
     // Create the launcher button
     function createLauncher() {
