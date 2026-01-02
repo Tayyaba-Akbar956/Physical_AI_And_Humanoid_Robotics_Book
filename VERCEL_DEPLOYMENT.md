@@ -19,10 +19,9 @@ The backend is located in the `/backend` folder and is configured to run as a Ve
    - `QDRANT_API_KEY`: API key for Qdrant.
    - `NEON_DB_URL`: PostgreSQL connection string (Neon DB).
    - `ALLOWED_ORIGINS`: `https://your-frontend-domain.vercel.app` (The frontend URL).
-   - `TIMEOUT_WARNING_SECONDS`: `8` (Hobby plan limit is 10s).
 6. Click **Deploy**.
 
-**Note**: The backend will be accessible at `https://your-backend-service.vercel.app/api`.
+**Note**: The backend will be accessible at `https://your-backend-service.vercel.app/`.
 
 ---
 
@@ -47,8 +46,7 @@ The frontend is the root Docusaurus project.
 
 1. **API URL Detection**: The frontend is configured to detect the backend URL in this order:
    - `REACT_APP_API_URL` environment variable (build-time).
-   - `<meta name="rag-chatbot-api-url" content="...">` tag in HTML.
-   - `data-api-url="..."` attribute on the widget script.
+   - `<meta name="rag-chatbot-api-url" content="...">` tag in HTML (added automatically by Docusaurus plugin).
 2. **CORS**: Ensure the backend's `ALLOWED_ORIGINS` includes your frontend's production URL.
 
 ---
@@ -71,4 +69,4 @@ Serverless functions do not maintain persistent database connections.
 
 - **403 CORS Error**: Double check the `ALLOWED_ORIGINS` in your backend deployment.
 - **504 Gateway Timeout**: The query took longer than Vercel's limit. Try asking a simpler question.
-- **404 Not Found**: Ensure you are calling `/api/...` and that the backend's `vercel.json` is correctly routing to `api/index.py`.
+- **404 Not Found**: Ensure you are calling `/api/...` and that the backend's `vercel.json` is correctly routing to `index.py`.

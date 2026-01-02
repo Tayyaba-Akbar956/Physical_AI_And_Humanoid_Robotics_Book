@@ -123,6 +123,16 @@ const config = {
         name: 'chatbot-plugin',
         injectHtmlTags() {
           return {
+            headTags: [
+              // Meta tag to specify the backend API URL
+              {
+                tagName: 'meta',
+                attributes: {
+                  name: 'rag-chatbot-api-url',
+                  content: process.env.REACT_APP_API_URL || '',
+                },
+              },
+            ],
             postBodyTags: [
               {
                 tagName: 'script',
