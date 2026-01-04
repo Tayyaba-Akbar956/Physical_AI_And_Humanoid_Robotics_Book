@@ -6,31 +6,40 @@
 (function () {
     // Function to get API URL - MUST be defined before CONFIG
     function getApiUrl() {
+        let url = '';
         // Check runtime meta tag first (set by Docusaurus plugin)
         const metaTag = document.querySelector('meta[name="rag-chatbot-api-url"]');
         if (metaTag && metaTag.content) {
-            return metaTag.content;
+            url = metaTag.content;
         }
 
-        // Check script data attribute
-        const script = document.querySelector('script[data-api-url]');
-        if (script && script.dataset && script.dataset.apiUrl) {
-            return script.dataset.apiUrl;
+        // Check script data attribute if not found in meta
+        if (!url) {
+            const script = document.querySelector('script[data-api-url]');
+            if (script && script.dataset && script.dataset.apiUrl) {
+                url = script.dataset.apiUrl;
+            }
         }
 
-        // Check global config
-        if (window.RAG_CHATBOT_CONFIG && window.RAG_CHATBOT_CONFIG.apiUrl) {
-            return window.RAG_CHATBOT_CONFIG.apiUrl;
+        // Check global config if not found yet
+        if (!url && window.RAG_CHATBOT_CONFIG && window.RAG_CHATBOT_CONFIG.apiUrl) {
+            url = window.RAG_CHATBOT_CONFIG.apiUrl;
         }
 
-        // Default fallback - localhost for dev, empty for prod (will be set via env)
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        // Default fallback for dev
+        if (!url && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
             return 'http://localhost:8000';
         }
 
-        // Production fallback - return empty string, user must configure via env variable
-        // The chatbot will show an error message if API URL is not configured
-        return '';
+        // If we found a URL, ensure it has a protocol to prevent it being treated as a relative path
+        if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+            // If it's just a path (starts with /), keep it as is, otherwise assume it needs https://
+            if (!url.startsWith('/')) {
+                url = 'https://' + url;
+            }
+        }
+
+        return url || '';
     }
 
     // Configuration
