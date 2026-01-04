@@ -1,8 +1,4 @@
 # Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
 
 # C extensions
 *.c
@@ -95,12 +91,6 @@ celerybeat.pid
 
 # Environments
 .env
-.venv/
-env/
-ENV/
-env.bak/
-venv/
-venv.bak/
 
 # Spyder project settings
 .spyderproject
@@ -161,4 +151,3 @@ Thumbs.db
 .claude/
 .history/
 .src/utils/
-backend/Dockerfile
