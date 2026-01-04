@@ -57,13 +57,13 @@
   --ifm-footer-color: #a832ff;
   /* Purple footer text */
 
-  /* Design tokens for UI improvements */
+  /* Design tokens for UI improvements - Light Mode Defaults */
   --color-black: #000000;
-  --color-card-bg: #1a1a1a;
+  --color-card-bg: #ffffff;
   --color-purple-glow: #8b5cf6;
   --color-purple-light: #a78bfa;
   --color-text-white: #ffffff;
-  --color-text-gray: #b8b8d1;
+  --color-text-gray: #444466; /* Darker gray for light mode visibility */
   --color-dark-gradient-start: #1a1a2e;
   --color-dark-gradient-end: #16213e;
 
@@ -105,6 +105,10 @@
   /* Purple footer titles in dark mode */
   --ifm-footer-color: #b34dff;
   /* Purple footer text in dark mode */
+
+  /* Dark Mode Overrides for custom tokens */
+  --color-card-bg: #1a1a1a;
+  --color-text-gray: #b8b8d1;
 }
 
 /* Glowing effect utility class */
