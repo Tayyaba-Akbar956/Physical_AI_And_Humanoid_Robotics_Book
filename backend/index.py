@@ -1,49 +1,39 @@
-# Vercel entry point for the backend API with minimal initialization
+# Vercel entry point for the backend API
 import os
 import sys
 from pathlib import Path
 
-# Add the backend directory to the Python path to handle relative imports
+# Add the backend directory to the Python path
 backend_path = Path(__file__).parent
 if str(backend_path) not in sys.path:
     sys.path.insert(0, str(backend_path))
 
 try:
-    # Import the main app from src.main
-    from src.main import app
-
-    # Add Mangum handler for Vercel serverless compatibility
+    from src.main import app as fastapi_app
     from mangum import Mangum
 
-    # Disable lifespan handling for Vercel serverless functions to avoid initialization issues
-    handler = Mangum(app, lifespan="off")
-
-    print("Backend initialized successfully")
+    # Wrap the FastAPI app with Mangum for Vercel serverless
+    # Lifespan="off" avoids initialization issues in serverless environments
+    handler = Mangum(fastapi_app, lifespan="off")
+    
+    # We export the mangum handler as 'app' because Vercel looks for 'app' by default
+    app = handler
 
 except Exception as e:
-    print(f"Error initializing backend: {e}")
-
-    # Create a minimal app for health checks if main app fails to initialize
+    print(f"CRITICAL: Backend failed to initialize: {e}")
+    # Fallback minimal app for debugging
     from fastapi import FastAPI
-    app = FastAPI(title="Physical AI RAG Backend - Fallback")
-
-    @app.get("/")
-    @app.get("/health")
+    err_app = FastAPI(title="Physical AI RAG Backend - Error Fallback")
+    
+    @err_app.get("/")
+    @err_app.get("/health")
+    @err_app.get("/api/health")
     async def health():
         return {
             "status": "error",
-            "message": f"Backend failed to initialize: {str(e)}",
-            "required_env_vars": [
-                "GEMINI_API_KEY",
-                "QDRANT_URL",
-                "QDRANT_API_KEY",
-                "NEON_DB_URL"
-            ]
+            "message": "Backend initialization failed",
+            "error_detail": str(e)
         }
-
+    
     from mangum import Mangum
-    handler = Mangum(app, lifespan="off")
-
-# For Vercel serverless functions
-def handler_func(event, context):
-    return handler(event, context)
+    app = Mangum(err_app, lifespan="off")
