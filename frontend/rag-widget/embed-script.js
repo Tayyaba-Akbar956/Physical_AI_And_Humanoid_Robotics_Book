@@ -4,7 +4,35 @@
  */
 
 (function () {
-    // Configuration
+    // Function to get API URL - MUST be defined before CONFIG
+    function getApiUrl() {
+        // Check runtime meta tag first (set by Docusaurus plugin)
+        const metaTag = document.querySelector('meta[name="rag-chatbot-api-url"]');
+        if (metaTag && metaTag.content) {
+            return metaTag.content;
+        }
+
+        // Check script data attribute
+        const script = document.querySelector('script[data-api-url]');
+        if (script && script.dataset && script.dataset.apiUrl) {
+            return script.dataset.apiUrl;
+        }
+
+        // Check global config
+        if (window.RAG_CHATBOT_CONFIG && window.RAG_CHATBOT_CONFIG.apiUrl) {
+            return window.RAG_CHATBOT_CONFIG.apiUrl;
+        }
+
+        // Default fallback - localhost for dev, empty for prod (will be set via env)
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            return 'http://localhost:8000';
+        }
+
+        // Production fallback - return empty string, user must configure via env variable
+        // The chatbot will show an error message if API URL is not configured
+        return '';
+    }
+
     // Configuration
     const CONFIG = {
         apiUrl: getApiUrl(),
@@ -14,36 +42,6 @@
         widgetTitle: 'Textbook Assistant',
         primaryColor: '#a832ff', // Purple theme
         secondaryColor: '#1a1a2e' // Dark background
-    };
-
-    // Function to get API URL
-    const getApiUrl = () => {
-        // Check build-time environment variable
-        if (typeof process !== 'undefined' && process.env.REACT_APP_API_URL) {
-            return process.env.REACT_APP_API_URL;
-        }
-
-        // Check runtime meta tag
-        const metaTag = document.querySelector('meta[name="rag-chatbot-api-url"]');
-        if (metaTag?.content) {
-            return metaTag.content;
-        }
-
-        // Check script data attribute
-        const script = document.querySelector('script[data-api-url]');
-        if (script?.dataset?.apiUrl) {
-            return script.dataset.apiUrl;
-        }
-
-        // Check global config
-        if (window.RAG_CHATBOT_CONFIG?.apiUrl) {
-            return window.RAG_CHATBOT_CONFIG.apiUrl;
-        }
-
-        // Default fallback
-        return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? 'http://localhost:8000'
-            : '';
     };
 
     // Create the launcher button
