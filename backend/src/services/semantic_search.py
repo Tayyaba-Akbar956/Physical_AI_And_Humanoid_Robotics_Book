@@ -558,7 +558,7 @@ class SemanticSearchService:
             print(f"Error getting content navigation suggestions: {e}")
             return []
     
-    def get_collection_stats(self):
+    async def get_collection_stats(self):
         """
         Get statistics about the searchable content collection
         """
