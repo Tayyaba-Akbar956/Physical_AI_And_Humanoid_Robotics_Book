@@ -24,7 +24,7 @@ export const getApiUrl = () => {
     }
 
     // Default fallback
-    return 'http://localhost:3001';
+    return 'https://physical-ai-and-humanoid-robotics-b-iota-two.vercel.app';
 };
 
 export const API_URL = getApiUrl();

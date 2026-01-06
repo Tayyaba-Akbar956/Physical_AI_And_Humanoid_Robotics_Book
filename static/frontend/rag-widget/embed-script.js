@@ -28,7 +28,7 @@
 
         // Default fallback for dev
         if (!url && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-            return 'http://localhost:3001';
+            return 'https://physical-ai-and-humanoid-robotics-b-iota-two.vercel.app'; // Use prod backend even locally for testing
         }
 
         // If we found a URL, ensure it has a protocol to prevent it being treated as a relative path

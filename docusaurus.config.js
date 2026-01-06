@@ -129,7 +129,7 @@ const config = {
                 tagName: 'meta',
                 attributes: {
                   name: 'rag-chatbot-api-url',
-                  content: process.env.REACT_APP_API_URL || '',
+                  content: process.env.REACT_APP_API_URL || 'https://physical-ai-and-humanoid-robotics-b-iota-two.vercel.app',
                 },
               },
             ],
