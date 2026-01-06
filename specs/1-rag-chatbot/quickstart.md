@@ -18,29 +18,27 @@ cd <repository-name>
 ```
 
 ### 2. Backend Setup
-
 1. Navigate to the backend directory:
 ```bash
-cd backend
+cd backend-node
 ```
 
-2. Create a virtual environment and activate it:
+2. Install dependencies:
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+npm install
 ```
 
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-4. Set up environment variables by creating a `.env` file:
+3. Set up environment variables by creating a `.env` file:
 ```env
-GEMINI_API_KEY=your_gemini_api_key  # For both embeddings and text generation
-NEON_DB_URL=your_neon_postgres_url
+GEMINI_API_KEY=your_gemini_api_key
+DATABASE_URL=postgresql://user:password@host:port/database
 QDRANT_URL=your_qdrant_cloud_url
 QDRANT_API_KEY=your_qdrant_api_key
+```
+
+4. Initialize the database:
+```bash
+npm run prisma:push
 ```
 
 ### 3. Frontend Setup
@@ -62,15 +60,14 @@ This will:
 - Upload embeddings to Qdrant with proper metadata
 
 ### 5. Run the Backend Service
-
-1. Start the FastAPI application:
+1. Start the development server:
 ```bash
-uvicorn src.main:app --reload --port 8000
+npm run dev
 ```
 
-2. Verify the service is running by visiting:
+2. Verify the service is running:
 ```bash
-http://localhost:8000/api/health
+http://localhost:3001/api/health
 ```
 
 ### 6. Embed the Chat Widget
@@ -83,7 +80,7 @@ Add the following script to the textbook pages to embed the chat widget:
 <script>
   // Initialize the chatbot widget
   initializeRagChatbot({
-    apiUrl: "http://localhost:8000",  // Update with your backend URL
+    apiUrl: "http://localhost:3001",  // Update with your backend URL
     containerId: "rag-chatbot-container",
     initialModule: "module-1-introduction"  // Set based on current page
   });
@@ -106,25 +103,14 @@ Add the following script to the textbook pages to embed the chat widget:
 - `POST /api/search/semantic` - Semantic search
 
 ## Testing
-
-1. Unit tests:
+1. Run all tests:
 ```bash
-pytest tests/unit/
-```
-
-2. Integration tests:
-```bash
-pytest tests/integration/
-```
-
-3. Run all tests:
-```bash
-pytest
+npm test
 ```
 
 ## Development Workflow
 
-1. Make changes to the backend in `backend/src/`
+1. Make changes to the backend in `backend-node/src/`
 2. Update API contracts in `specs/1-rag-chatbot/contracts/` if needed
 3. Update data models in `specs/1-rag-chatbot/data-model.md` if needed
 4. Test changes using the test suite

@@ -15,6 +15,14 @@ As a student studying the Physical AI & Humanoid Robotics textbook, I want to as
 
 **Independent Test**: Students can ask any question about the textbook content and receive a response that cites specific modules/chapters from the book. If the information isn't in the book, the system clearly states this.
 
+### 6.2 Technology Stack
+*   **Frontend:** Docusaurus (React), Custom Chat Widget
+*   **Backend:** Node.js, Express.js, TypeScript
+*   **Database:** PostgreSQL with Prisma ORM
+*   **Vector Database:** Qdrant
+*   **LLM:** Google Gemini 2.0 Flash (via `@google/generative-ai`)
+*   **Communication:** REST API, WebSockets for streaming responses
+
 **Acceptance Scenarios**:
 
 1. **Given** a student is studying Module 2 (ROS 2), **When** they ask "How do ROS 2 nodes communicate with each other?", **Then** the chatbot retrieves relevant passages from the textbook, explains node communication using book terminology, and cites the specific module/chapter where the information comes from.

@@ -151,3 +151,5 @@ Thumbs.db
 .claude/
 .history/
 .src/utils/
+backend_python/
+backend-node/

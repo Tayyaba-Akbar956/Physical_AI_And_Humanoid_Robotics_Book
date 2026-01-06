@@ -11,8 +11,8 @@ Implementation of a RAG (Retrieval-Augmented Generation) Chatbot embedded within
 
 ## Technical Context
 
-**Language/Version**: Python 3.11+, JavaScript/TypeScript
-**Primary Dependencies**: OpenAI Agents SDK (using GEMINI 2.5 flash via OpenAI-compatible API), FastAPI, Qdrant client library, Neon serverless PostgreSQL driver
+**Language/Version**: Node.js 18+, TypeScript
+**Primary Dependencies**: Express.js, Prisma ORM, `@google/generative-ai`, `@qdrant/js-client-rest`, `ws`
 **Storage**: Neon Serverless Postgres (structured data), Qdrant Cloud (vector embeddings)
 **Testing**: pytest for backend/unit tests, integration tests for full query flow
 **Target Platform**: Linux server (backend), Web browser (frontend widget)
@@ -86,25 +86,27 @@ specs/1-rag-chatbot/
 ### Source Code (repository root)
 
 ```text
-backend/
+backend-node/
 ├── src/
 │   ├── models/
 │   ├── services/
-│   │   ├── rag_agent.py          # OpenAI Agents SDK implementation
-│   │   ├── text_selection.py     # Text selection capture service
-│   │   ├── semantic_search.py    # Qdrant-based search service  
-│   │   ├── content_processor.py  # Textbook content processing
-│   │   └── session_manager.py    # Conversation session management
+│   │   ├── rag-agent.ts          # Core RAG logic
+│   │   ├── websocket.ts          # WebSocket handler
+│   │   ├── semantic-search.ts    # Qdrant-based search service  
+│   │   ├── gemini.ts             # Google Generative AI service
+│   │   └── session-manager.ts    # Conversation session management
 │   ├── api/
-│   │   ├── chat_endpoints.py     # FastAPI chat endpoints
-│   │   ├── text_selection_endpoints.py  # Text selection endpoints
-│   │   └── session_endpoints.py  # Session management endpoints
-│   └── main.py                   # Application entry point
+│   │   ├── chat.ts               # Express chat endpoints
+│   │   ├── text-selection.ts     # Text selection endpoints
+│   │   └── conversation.ts       # Session management endpoints
+│   └── index.ts                  # Application entry point
 ├── tests/
 │   ├── unit/
 │   ├── integration/
 │   └── data/
-└── requirements.txt               # Python dependencies
+├── package.json                   # Node.js dependencies
+└── prisma/
+    └── schema.prisma             # Prisma database schema
 
 frontend/
 ├── rag-widget/
