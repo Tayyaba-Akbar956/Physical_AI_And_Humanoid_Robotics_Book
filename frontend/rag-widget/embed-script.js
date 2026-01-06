@@ -28,7 +28,7 @@
 
         // Default fallback for dev
         if (!url && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-            return 'http://localhost:8000';
+            return 'http://localhost:3001';
         }
 
         // If we found a URL, ensure it has a protocol to prevent it being treated as a relative path
